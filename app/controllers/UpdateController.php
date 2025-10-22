@@ -6,7 +6,7 @@ require_once __DIR__ . '/AdminController.php';
 class UpdateController {
 
     // VERANDER DIT NAAR JE EIGEN GITHUB REPOSITORY
-    private const GITHUB_REPO = 'yielder-bv/bezoekverslag-app'; // Voorbeeld: 'gebruikersnaam/repository-naam'
+    private const GITHUB_REPO = 'berndvos/bezoekverslag_app'; // Voorbeeld: 'gebruikersnaam/repository-naam'
     private const GITHUB_API_URL = 'https://api.github.com/repos/';
 
     /**
@@ -80,7 +80,7 @@ class UpdateController {
         curl_close($ch);
 
         return [
-            'version' => ltrim($data['tag_name'], 'v'),
+            'version' => preg_replace('/^v/i', '', $data['tag_name']),
             'name' => $data['name'],
             'published_at' => $data['published_at'],
             'body' => $data['body'], // Release notes
