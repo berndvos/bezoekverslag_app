@@ -1,0 +1,69 @@
+# ===================================
+# Composer dependencies
+# ===================================
+/vendor/
+
+# ===================================
+# Environment & configuratie
+# ===================================
+.env
+.env.local
+.env.backup
+.xconfig/
+database.php
+mail_settings.php
+settings.env
+
+# ===================================
+# Logfiles, cache, tijdelijke bestanden
+# ===================================
+storage/*
+!storage/.gitkeep
+
+# Als je met Laravel of een vergelijkbare structuur werkt, overweeg:
+# !storage/framework/
+# !storage/logs/
+# !storage/app/public/
+
+# ===================================
+# Gebruikersuploads (foto's, bijlagen)
+# ===================================
+public/uploads/*
+!public/uploads/.gitkeep
+
+# ===================================
+# IDE / editor instellingen
+# ===================================
+.idea/
+.vscode/
+*.code-workspace
+
+# ===================================
+# OS-specifieke bestanden
+# ===================================
+.DS_Store
+Thumbs.db
+
+# ===================================
+# Backups, exports, en PDF-generatie
+# ===================================
+*.bak
+*.sql
+*.zip
+*.tar.gz
+*.pdf
+*.tmp
+
+# ===================================
+# Persoonlijke of lokale sessies / dev files
+# ===================================
+.bash_history
+Localhost.session.sql
+
+# ===================================
+# Node & front-end build (indien van toepassing)
+# ===================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

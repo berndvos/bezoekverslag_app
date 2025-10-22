@@ -1,0 +1,117 @@
+/* ===========================
+   Yielder Bezoekverslag — Styles
+   Bootstrap 5.3 overrides via CSS vars
+   =========================== */
+
+/* Brand palette (tweakable) */
+:root {
+  --yld-primary: #FFD200; /* Yielder-geel (afgestemd op site-accent) */
+  --yld-primary-contrast: #111111;
+  --yld-dark: #111111;
+  --yld-text: #1a1a1a;
+  --yld-muted: #6b6b6b;
+  --yld-bg: #ffffff;
+  --yld-bg-soft: #fff8cc; /* lichte geel-tint voor highlights */
+
+  /* Bootstrap CSS vars */
+  --bs-primary: var(--yld-primary);
+  --bs-body-color: var(--yld-text);
+  --bs-body-bg: var(--yld-bg);
+  --bs-link-color: #0a58ca;
+  --bs-link-hover-color: #084298;
+}
+
+/* Body container */
+body { padding: 20px; background: var(--bs-body-bg); color: var(--bs-body-color); }
+.container { max-width: 1100px; }
+
+/* Navbar in Yielder-stijl */
+.yld-navbar {
+  background: var(--yld-primary) !important;
+  border: 1px solid rgba(0,0,0,.06);
+}
+.yld-navbar .navbar-brand,
+.yld-navbar .nav-link {
+  color: var(--yld-primary-contrast) !important;
+}
+.yld-navbar .navbar-brand img { display: inline-block; }
+.yld-navbar .navbar-toggler {
+  border-color: rgba(0,0,0,.25);
+}
+
+/* Buttons */
+.btn-primary {
+  --bs-btn-bg: var(--yld-primary);
+  --bs-btn-border-color: var(--yld-primary);
+  --bs-btn-hover-bg: #e6bf00;
+  --bs-btn-hover-border-color: #e6bf00;
+  --bs-btn-color: var(--yld-primary-contrast);
+}
+.btn-outline-secondary {
+  --bs-btn-color: var(--yld-dark);
+  --bs-btn-border-color: var(--yld-dark);
+  --bs-btn-hover-bg: var(--yld-dark);
+  --bs-btn-hover-border-color: var(--yld-dark);
+  --bs-btn-hover-color: #fff;
+}
+
+/* Cards / panels */
+.card { border-radius: .65rem; }
+.card-header {
+  background: var(--yld-bg-soft);
+  border-bottom: 1px solid rgba(0,0,0,.05);
+}
+
+/* Tables */
+.table thead.table-light {
+  background: var(--yld-bg-soft);
+  color: var(--yld-dark);
+}
+.table-hover tbody tr:hover {
+  background-color: rgba(255, 210, 0, 0.08);
+}
+
+/* Badges & labels */
+.badge.bg-primary {
+  background: var(--yld-primary) !important;
+  color: var(--yld-primary-contrast) !important;
+}
+
+/* Forms */
+.form-control:focus, .form-select:focus {
+  border-color: var(--yld-primary);
+  box-shadow: 0 0 0 .2rem rgba(255,210,0, .25);
+}
+
+/* Footer */
+.yld-footer {
+  background: #f9f9f9;
+  border-top: 1px solid rgba(0,0,0,.06);
+}
+.yld-footer .nav-link { color: var(--yld-muted); }
+.yld-footer .nav-link:hover { color: var(--yld-dark); }
+
+/* Utilities */
+.yld-accent { color: var(--yld-primary); }
+.yld-chip {
+  display: inline-block;
+  padding: .25rem .5rem;
+  border-radius: 999px;
+  background: var(--yld-bg-soft);
+  color: var(--yld-dark);
+  font-size: .8rem;
+  border: 1px solid rgba(0,0,0,.05);
+}
+/* Zijbalk smaller en sticky */
+.side-nav {
+  position: sticky;
+  top: 100px; /* afstand vanaf bovenkant */
+  max-width: 220px;
+}
+
+.side-nav .btn {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}

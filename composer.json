@@ -1,0 +1,17 @@
+{
+    "name": "yielder/bezoekverslag-app",
+    "description": "Webapp voor het aanmaken en beheren van bezoekverslagen met PDF-export.",
+    "type": "project",
+    "require": {
+        "dompdf/dompdf": "^2.0",
+        "phpmailer/phpmailer": "^6.9",
+        "vlucas/phpdotenv": "^5.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "minimum-stability": "stable",
+    "license": "MIT"
+}
