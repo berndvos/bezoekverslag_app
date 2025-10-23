@@ -19,12 +19,6 @@ class UpdateController {
         $token = $_POST['csrf_token'] ?? $_GET['csrf_token'] ?? null;
         require_valid_csrf_token($token);
 
-        if (!self::ENABLE_SELF_UPDATE) {
-            http_response_code(403);
-            echo json_encode(['error' => 'Automatische updates zijn uitgeschakeld. Voer updates handmatig uit.']);
-            exit;
-        }
-
         try {
             // Controleer of de cURL-extensie is geladen
             if (!extension_loaded('curl')) {
@@ -40,7 +34,8 @@ class UpdateController {
             }
 
             // Gebruik require om de waarde uit version.php te laden (bestand returnt de versie string)
-            $currentVersion = trim(require __DIR__ . '/../../config/version.php');
+            $currentVersionRaw = trim(require __DIR__ . '/../../config/version.php');
+            $currentVersion = $this->normalizeVersion($currentVersionRaw);
 
             $latestVersionData = $this->getLatestVersionFromGitHub();
 
@@ -51,13 +46,14 @@ class UpdateController {
                 exit;
             }
 
-            $latestVersion = $latestVersionData['version'];
+            $latestVersion = $this->normalizeVersion($latestVersionData['version']);
 
             $response = [
-                'current_version' => $currentVersion,
-                'latest_version' => $latestVersion,
-                'update_available' => version_compare($latestVersion, $currentVersion, ' > '),
-                'release_info' => $latestVersionData
+                'current_version' => $currentVersionRaw,
+                'latest_version' => $latestVersionData['tag_name'] ?? $latestVersionData['version'],
+                'update_available' => version_compare($latestVersion, $currentVersion, '>'),
+                'release_info' => $latestVersionData,
+                'can_self_update' => self::ENABLE_SELF_UPDATE
             ];
 
             echo json_encode($response);
@@ -116,6 +112,7 @@ class UpdateController {
 
         return [
             'version' => preg_replace('/^v/i', '', $data['tag_name']),
+            'tag_name' => $data['tag_name'],
             'name' => $data['name'],
             'published_at' => $data['published_at'],
             'body' => $data['body'], // Release notes
@@ -315,5 +312,13 @@ class UpdateController {
             @$todo($fileinfo->getRealPath());
         }
         @rmdir($dir);
+    }
+
+    /**
+     * Normaliseert versie strings door voorloopspaties en een eventueel voorvoegsel 'v' te verwijderen.
+     */
+    private function normalizeVersion(string $version): string {
+        $version = trim($version);
+        return preg_replace('/^v/i', '', $version);
     }
 }

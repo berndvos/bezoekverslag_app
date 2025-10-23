@@ -1,0 +1,38 @@
+Bezoekverslag – Handmatige update-instructies
+============================================
+
+1. Maak een volledige back-up
+   - Download via het adminpaneel een database-export (onder Logboek > Back-up).
+   - Kopieer de volledige applicatiemap (inclusief het mapje public/) naar een veilige locatie.
+
+2. Download de nieuwste release
+   - Ga naar https://github.com/berndvos/bezoekverslag_app/releases
+   - Download het ZIP-bestand van de versie waar u naartoe wil updaten (bijv. v1.0.1).
+
+3. Pak de release lokaal uit
+   - Open het ZIP-bestand en pak de inhoud uit naar een tijdelijke map.
+
+4. Kopieer de bestanden naar de server
+   - Upload alle bestanden uit de uitgepakte map naar uw server.
+   - Overschrijf bestaande bestanden, maar laat de volgende bestanden staan:
+     • .env
+     • settings.env
+     • public/uploads (en overige geuploade bestanden)
+     • storage/backups
+
+5. Voer database-migraties uit (indien vermeld)
+   - Controleer de release-notes of er SQL-wijzigingen nodig zijn en voer deze uit op de database.
+
+6. Wis cachebestanden (indien van toepassing)
+   - Verwijder tijdelijke cachebestanden of vraag uw hostingprovider om PHP-opcache te verversen.
+
+7. Controleer de applicatie
+   - Log opnieuw in op het adminpaneel.
+   - Controleer of de versie klopt en test de belangrijkste functies (inloggen, verslag bekijken/bewerken).
+
+8. Probleemoplossing
+   - Herstel de back-up als er kritieke fouten optreden.
+   - Controleer de serverlogs voor foutmeldingen.
+   - Raadpleeg de documentatie of open een issue op GitHub voor ondersteuning.
+
+Tip: plan updates buiten kantooruren en communiceer de onderhoudsperiode met gebruikers.

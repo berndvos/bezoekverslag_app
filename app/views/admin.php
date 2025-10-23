@@ -727,6 +727,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
 
+                const releaseInfo = data.release_info || {};
+                const releaseNotesRaw = typeof releaseInfo.body === 'string' ? releaseInfo.body : '';
+                const releaseNotesHtml = releaseNotesRaw.replace(/\r?\n/g, '<br>');
+                const releaseVersionDisplay = releaseInfo.tag_name || releaseInfo.version || data.latest_version;
+                const releaseNameSuffix = releaseInfo.name ? ` (${releaseInfo.name})` : '';
+                const canSelfUpdate = !!data.can_self_update;
+
                 let resultHtml = `
                     <p>Huidige versie: <strong>${data.current_version}</strong><br>
                        Laatste versie: <strong>${data.latest_version}</strong></p>
@@ -736,20 +743,39 @@ document.addEventListener('DOMContentLoaded', function() {
                     resultHtml += `
                         <div class="alert alert-success">
                             <h5 class="alert-heading"><i class="bi bi-gift-fill"></i> Er is een update beschikbaar!</h5>
-                            <p>Versie <strong>${data.release_info.version}</strong> (${data.release_info.name}) is beschikbaar.</p>
+                            <p>Versie <strong>${releaseVersionDisplay}</strong>${releaseNameSuffix} is beschikbaar.</p>
                             <hr>
                             <h6>Release notes:</h6>
-                            <div class="small">${data.release_info.body.replace(/\r\n/g, '<br>')}</div>
+                            <div class="small">${releaseNotesHtml}</div>
                             <hr>
                             <p class="mt-3"><strong>Belangrijk:</strong> Maak een back-up van uw bestanden en database voordat u de update start. De updater probeert dit automatisch te doen, maar een handmatige back-up wordt aangeraden.</p>
-                            <button id="perform-update-btn" class="btn btn-success">
-                                <i class="bi bi-cloud-arrow-down-fill"></i> Nu updaten naar versie ${data.release_info.version}
+                    `;
+                    if (canSelfUpdate) {
+                        resultHtml += `
+                            <button id="perform-update-btn" class="btn btn-success mt-3">
+                                <i class="bi bi-cloud-arrow-down-fill"></i> Nu updaten naar versie ${releaseVersionDisplay}
                             </button>
+                        `;
+                    } else {
+                        resultHtml += `
+                            <p class="mt-3 mb-0"><strong>Automatische updates zijn uitgeschakeld.</strong> Download de nieuwste release handmatig via GitHub en voer de update uit volgens de documentatie.</p>
+                        `;
+                    }
+                    resultHtml += `
                         </div>
                     `;
                 } else {
                     resultHtml += `<div class="alert alert-info"><i class="bi bi-check-circle-fill"></i> U gebruikt de meest recente versie.</div>`;
                 }
+
+                resultHtml += `
+                    <p class="mt-3">
+                        <a href="update_instructions.txt" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-book"></i> Update-instructies openen
+                        </a>
+                    </p>
+                `;
+
                 updateResultDiv.innerHTML = resultHtml;
             })
             .catch(error => {
