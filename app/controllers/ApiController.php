@@ -100,11 +100,30 @@ class ApiController {
         $pcKeys     = ['postcode','postalcode','zip','zip_code','post_code'];
 
         foreach ($candidates as $cand) {
-            if (!is_array($cand)) continue;
-            foreach ($streetKeys as $k) { if (isset($cand[$k]) && is_string($cand[$k]) && $cand[$k] !== '') { $street = $cand[$k]; break; } }
-            foreach ($cityKeys as $k)   { if (isset($cand[$k]) && is_string($cand[$k]) && $cand[$k] !== '')   { $city   = $cand[$k];   break; } }
-            foreach ($pcKeys as $k)     { if (isset($cand[$k]) && is_string($cand[$k]) && $cand[$k] !== '') { $pc     = strtoupper(str_replace(' ', '', $cand[$k])); break; } }
-            if ($street && $city) break;
+            if (!is_array($cand)) {
+                continue;
+            }
+            foreach ($streetKeys as $k) {
+                if (isset($cand[$k]) && is_string($cand[$k]) && $cand[$k] !== '') {
+                    $street = $cand[$k];
+                    break;
+                }
+            }
+            foreach ($cityKeys as $k) {
+                if (isset($cand[$k]) && is_string($cand[$k]) && $cand[$k] !== '') {
+                    $city = $cand[$k];
+                    break;
+                }
+            }
+            foreach ($pcKeys as $k) {
+                if (isset($cand[$k]) && is_string($cand[$k]) && $cand[$k] !== '') {
+                    $pc = strtoupper(str_replace(' ', '', $cand[$k]));
+                    break;
+                }
+            }
+            if ($street && $city) {
+                break;
+            }
         }
 
         if (!$street || !$city) {

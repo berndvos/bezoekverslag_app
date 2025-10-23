@@ -6,6 +6,9 @@ use Dompdf\Dompdf;
 use Dompdf\Options;
 
 class BezoekverslagController {
+    private const REDIRECT_EDIT_PREFIX = 'Location: ?page=bewerk&id=';
+    private const REDIRECT_DASHBOARD = 'Location: ?page=dashboard';
+    private const SAFE_FILENAME_PATTERN = '/[^a-zA-Z0-9_-]/';
     private $sectionFields = [
         'relatie' => ['klantnaam', 'projecttitel', 'straatnaam', 'huisnummer', 'huisnummer_toevoeging', 'postcode', 'plaats', 'kvk', 'btw'],
         'contact' => ['contact_naam', 'contact_functie', 'contact_email', 'contact_tel'],
@@ -83,7 +86,7 @@ class BezoekverslagController {
                 $_SESSION['user_id']
             ]);
 
-            header("Location: ?page=bewerk&id=" . $pdo->lastInsertId());
+            header(self::REDIRECT_EDIT_PREFIX . $pdo->lastInsertId());
             exit;
         }
 
@@ -288,7 +291,7 @@ class BezoekverslagController {
         // Toegangscontrole voor het laden van de pagina (GET request)
         if (!canEditVerslag($id)) {
             $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'U heeft geen rechten om dit verslag te bewerken.'];
-            header("Location: ?page=dashboard");
+            header(self::REDIRECT_DASHBOARD);
             exit;
         }
 
@@ -346,7 +349,7 @@ class BezoekverslagController {
             $stmt->execute([$id, $_SESSION['user_id']]);
             if (!$stmt->fetch()) {
                 $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'U heeft geen rechten om dit verslag te verwijderen.'];
-                header("Location: ?page=dashboard");
+                header(self::REDIRECT_DASHBOARD);
                 exit;
             }
         }
@@ -357,7 +360,7 @@ class BezoekverslagController {
 
         log_action('verslag_soft_deleted', "Bezoekverslag #{$id} is naar de prullenbak verplaatst.");
         $_SESSION['flash_message'] = ['type' => 'info', 'text' => 'Bezoekverslag is naar de prullenbak verplaatst.'];
-        header("Location: ?page=dashboard");
+        header(self::REDIRECT_DASHBOARD);
         exit;
     }
 
@@ -368,7 +371,7 @@ class BezoekverslagController {
         // Controleer of de GD-extensie is ingeschakeld, nodig voor afbeeldingen
         if (!extension_loaded('gd')) {
             $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Fout: De GD PHP-extensie is niet ingeschakeld op de server. Deze is nodig voor het verwerken van afbeeldingen in de PDF.'];
-            header("Location: ?page=bewerk&id=" . $id);
+            header(self::REDIRECT_EDIT_PREFIX . $id);
             exit;
         }
 
@@ -384,17 +387,27 @@ class BezoekverslagController {
         $stmt->execute([$id]);
         $verslag = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$verslag) die("Verslag niet gevonden.");
+        if (!$verslag) {
+            die("Verslag niet gevonden.");
+        }
 
         // --- VALIDATIE VOOR PDF GENERATIE ---
         $errors = [];
         if (($verslag['installatie_adres_afwijkend'] ?? 'Nee') === 'Ja') {
-            if (empty($verslag['installatie_adres_straat'])) $errors[] = 'Afwijkend installatieadres: "Adres" is verplicht.';
-            if (empty($verslag['installatie_adres_postcode'])) $errors[] = 'Afwijkend installatieadres: "Postcode" is verplicht.';
-            if (empty($verslag['installatie_adres_plaats'])) $errors[] = 'Afwijkend installatieadres: "Plaats" is verplicht.';
+            if (empty($verslag['installatie_adres_straat'])) {
+                $errors[] = 'Afwijkend installatieadres: "Adres" is verplicht.';
+            }
+            if (empty($verslag['installatie_adres_postcode'])) {
+                $errors[] = 'Afwijkend installatieadres: "Postcode" is verplicht.';
+            }
+            if (empty($verslag['installatie_adres_plaats'])) {
+                $errors[] = 'Afwijkend installatieadres: "Plaats" is verplicht.';
+            }
         }
         if (($verslag['cp_locatie_afwijkend'] ?? 'Nee') === 'Ja') {
-            if (empty($verslag['cp_locatie_naam'])) $errors[] = 'Contactpersoon op locatie: "Naam" is verplicht.';
+            if (empty($verslag['cp_locatie_naam'])) {
+                $errors[] = 'Contactpersoon op locatie: "Naam" is verplicht.';
+            }
             if (empty($verslag['cp_locatie_email']) && empty($verslag['cp_locatie_tel'])) {
                 $errors[] = 'Contactpersoon op locatie: "E-mailadres" of "Telefoonnummer" is verplicht.';
             }
@@ -403,12 +416,14 @@ class BezoekverslagController {
         if (!empty($errors)) {
             $errorHtml = '<ul><li>' . implode('</li><li>', $errors) . '</li></ul>';
             $_SESSION['flash_message'] = ['type' => 'danger', 'text' => '<strong>PDF niet gegenereerd.</strong> De volgende velden zijn verplicht:<br>' . $errorHtml];
-            header("Location: ?page=bewerk&id=" . $id);
+            header(self::REDIRECT_EDIT_PREFIX . $id);
             exit;
         }
 
         $pdfDir = __DIR__ . '/../../storage/pdfs/';
-        if (!is_dir($pdfDir)) mkdir($pdfDir, 0777, true);
+        if (!is_dir($pdfDir)) {
+            mkdir($pdfDir, 0777, true);
+        }
 
         // Als PDF up-to-date is en bestaat, toon de bestaande
         if (!empty($verslag['pdf_up_to_date']) && !empty($verslag['pdf_path']) && file_exists($pdfDir . $verslag['pdf_path'])) {
@@ -506,7 +521,7 @@ class BezoekverslagController {
 
             $_SESSION['flash_message'] = ['type' => 'warning', 'text' => "Wachtwoord gereset. Het nieuwe eenmalige wachtwoord is: <strong>$password</strong>. Geef dit door aan de klant."];
         }
-        header("Location: ?page=bewerk&id=" . $id);
+        header(self::REDIRECT_EDIT_PREFIX . $id);
         exit;
     }
 
@@ -515,7 +530,7 @@ class BezoekverslagController {
 
         if (!class_exists('ZipArchive')) {
             $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Fout: De ZipArchive PHP-extensie is niet ingeschakeld op de server.'];
-            header("Location: ?page=bewerk&id=" . $verslag_id);
+            header(self::REDIRECT_EDIT_PREFIX . $verslag_id);
             exit;
         }
 
@@ -526,14 +541,14 @@ class BezoekverslagController {
 
         if (empty($files)) {
             $_SESSION['flash_message'] = ['type' => 'warning', 'text' => 'Er zijn geen projectbestanden om te downloaden.'];
-            header("Location: ?page=bewerk&id=" . $verslag_id);
+            header(self::REDIRECT_EDIT_PREFIX . $verslag_id);
             exit;
         }
 
         $verslagStmt = $pdo->prepare("SELECT klantnaam FROM bezoekverslag WHERE id = ?");
         $verslagStmt->execute([$verslag_id]);
         $verslag = $verslagStmt->fetch(PDO::FETCH_ASSOC);
-        $safeKlantnaam = preg_replace('/[^a-zA-Z0-9_-]/', '_', $verslag['klantnaam'] ?? 'project');
+        $safeKlantnaam = preg_replace(self::SAFE_FILENAME_PATTERN, '_', $verslag['klantnaam'] ?? 'project');
         $zipFilename = 'Projectbestanden_' . $safeKlantnaam . '.zip';
 
         $zip = new ZipArchive();
@@ -634,7 +649,7 @@ class BezoekverslagController {
         // Controleer of de Zip-extensie is ingeschakeld
         if (!class_exists('ZipArchive')) {
             $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Fout: De ZipArchive PHP-extensie is niet ingeschakeld op de server.'];
-            header("Location: ?page=dashboard");
+            header(self::REDIRECT_DASHBOARD);
             exit;
         }
 
@@ -653,7 +668,7 @@ class BezoekverslagController {
 
         if (empty($photos)) {
             $_SESSION['flash_message'] = ['type' => 'warning', 'text' => 'Er zijn geen foto\'s beschikbaar om te downloaden voor dit verslag.'];
-            header("Location: ?page=dashboard");
+            header(self::REDIRECT_DASHBOARD);
             exit;
         }
 
@@ -661,7 +676,7 @@ class BezoekverslagController {
         $verslagStmt = $pdo->prepare("SELECT klantnaam, projecttitel FROM bezoekverslag WHERE id = ?");
         $verslagStmt->execute([$verslag_id]);
         $verslag = $verslagStmt->fetch(PDO::FETCH_ASSOC);
-        $safeKlantnaam = preg_replace('/[^a-zA-Z0-9_-]/', '_', $verslag['klantnaam'] ?? 'verslag');
+        $safeKlantnaam = preg_replace(self::SAFE_FILENAME_PATTERN, '_', $verslag['klantnaam'] ?? 'verslag');
         $zipFilename = 'Fotos_' . $safeKlantnaam . '.zip';
 
         $zip = new ZipArchive();
@@ -673,7 +688,7 @@ class BezoekverslagController {
 
         $photoCounters = [];
         foreach ($photos as $photo) {
-            $ruimteNaam = preg_replace('/[^a-zA-Z0-9_-]/', '_', $photo['ruimte_naam']);
+            $ruimteNaam = preg_replace(self::SAFE_FILENAME_PATTERN, '_', $photo['ruimte_naam']);
             $fullPhotoPath = __DIR__ . '/../../public/' . $photo['foto_pad'];
 
             if (file_exists($fullPhotoPath)) {

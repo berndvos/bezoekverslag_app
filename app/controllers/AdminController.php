@@ -14,83 +14,18 @@ class AdminController {
     private const REDIRECT_ADMIN_REGISTRATIONS = 'Location: ?page=admin#registraties';
     private const REDIRECT_ADMIN_MAINTENANCE = 'Location: ?page=admin#onderhoud';
     private const REDIRECT_ADMIN_TRASH = 'Location: ?page=admin#prullenbak';
+    private const REDIRECT_ADMIN_SMTP = 'Location: ?page=admin#smtp';
     private const HEADER_JSON = 'Content-Type: application/json';
     private const BRANDING_CONFIG_RELATIVE_PATH = '/../../config/branding.php';
 
     /** Gebruikersoverzicht */
     public function users() {
         requireRole(['admin', 'poweruser']);
-        // Start de sessie als dat nog niet gebeurd is, voor flash messages.
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        $this->ensureSessionStarted();
         $pdo = Database::getConnection();
 
-        // Nieuwe gebruiker toevoegen
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_user'])) {
-            require_valid_csrf_token($_POST['csrf_token'] ?? null);
-            if ($this->createUser($pdo)) {
-                log_action('user_created', "Gebruiker '{$_POST['email']}' aangemaakt.");
-            }
-            header(self::REDIRECT_ADMIN);
-            exit;
-        }
-
-        // Gebruiker bewerken
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
-            require_valid_csrf_token($_POST['csrf_token'] ?? null);
-            if ($this->updateUser($pdo)) {
-                $_SESSION['flash_message'] = ['type' => 'success', 'text' => 'Gebruiker succesvol bijgewerkt.'];
-                log_action('user_updated', "Gebruiker '{$_POST['email']}' bijgewerkt.");
-            }
-            header(self::REDIRECT_ADMIN);
-            exit;
-        }
-
-        // Logo uploaden
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_logo'])) {
-            require_valid_csrf_token($_POST['csrf_token'] ?? null);
-            if ($this->handleLogoUpload()) {
-                $_SESSION['flash_message'] = ['type' => 'success', 'text' => 'Logo succesvol geüpload.'];
-            }
-            header(self::REDIRECT_ADMIN_MAINTENANCE);
-            exit;
-        }
-
-        // Branding instellingen bijwerken
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_branding'])) {
-            // AJAX afhandeling
-            header(self::HEADER_JSON);
-            require_valid_csrf_token($_POST['csrf_token'] ?? null);
-            if ($this->saveBrandingSettings()) {
-                echo json_encode(['success' => true, 'message' => 'Huisstijl-instellingen succesvol opgeslagen.']);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Kon de instellingen niet opslaan.']);
-            }
-            // Stop de uitvoering na het versturen van de JSON-response.
-            exit;
-        }
-
-        // E-mail sjablonen bijwerken
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_email_templates'])) {
-            // AJAX afhandeling
-            header(self::HEADER_JSON);
-            require_valid_csrf_token($_POST['csrf_token'] ?? null);
-            if ($this->saveEmailTemplates()) {
-                echo json_encode(['success' => true, 'message' => 'E-mail sjablonen succesvol opgeslagen.']);
-            } else {
-                // De saveEmailTemplates methode zet zelf al een flash message, maar we sturen hier een generieke fout.
-                echo json_encode(['success' => false, 'message' => 'Kon de e-mail sjablonen niet opslaan. Controleer de schrijfrechten.']);
-            }
-            exit;
-        }
-
-        // Gebruikersregistratie goedkeuren/afwijzen
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['manage_registration'])) {
-            require_valid_csrf_token($_POST['csrf_token'] ?? null);
-            $this->manageRegistration($pdo);
-            header(self::REDIRECT_ADMIN_REGISTRATIONS);
-            exit;
+        if ($this->handleUsersPostRequests($pdo)) {
+            return;
         }
 
         // Gebruikers ophalen
@@ -111,6 +46,98 @@ class AdminController {
         $brandingSettings = $this->getBrandingSettings();
 
         include __DIR__ . '/../views/admin.php';
+    }
+
+    private function ensureSessionStarted(): void {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+    }
+
+    private function handleUsersPostRequests(PDO $pdo): bool {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            return false;
+        }
+
+        $actionHandlers = [
+            'create_user' => function () use ($pdo) { $this->processCreateUser($pdo); },
+            'update_user' => function () use ($pdo) { $this->processUpdateUser($pdo); },
+            'upload_logo' => function () { $this->processLogoUpload(); },
+            'update_branding' => function () { $this->processBrandingUpdate(); },
+            'update_email_templates' => function () { $this->processEmailTemplateUpdate(); },
+            'manage_registration' => function () use ($pdo) { $this->processRegistrationManagement($pdo); },
+        ];
+
+        foreach ($actionHandlers as $key => $handler) {
+            if (!isset($_POST[$key])) {
+                continue;
+            }
+            $handler();
+            return true;
+        }
+
+        return false;
+    }
+
+    private function processCreateUser(PDO $pdo): void {
+        require_valid_csrf_token($_POST['csrf_token'] ?? null);
+        if ($this->createUser($pdo)) {
+            log_action('user_created', "Gebruiker '{$_POST['email']}' aangemaakt.");
+        }
+        header(self::REDIRECT_ADMIN);
+        exit;
+    }
+
+    private function processUpdateUser(PDO $pdo): void {
+        require_valid_csrf_token($_POST['csrf_token'] ?? null);
+        if ($this->updateUser($pdo)) {
+            $_SESSION['flash_message'] = ['type' => 'success', 'text' => 'Gebruiker succesvol bijgewerkt.'];
+            log_action('user_updated', "Gebruiker '{$_POST['email']}' bijgewerkt.");
+        }
+        header(self::REDIRECT_ADMIN);
+        exit;
+    }
+
+    private function processLogoUpload(): void {
+        require_valid_csrf_token($_POST['csrf_token'] ?? null);
+        if ($this->handleLogoUpload()) {
+            $_SESSION['flash_message'] = ['type' => 'success', 'text' => 'Logo succesvol geupload.'];
+        }
+        header(self::REDIRECT_ADMIN_MAINTENANCE);
+        exit;
+    }
+
+    private function processBrandingUpdate(): void {
+        header(self::HEADER_JSON);
+        require_valid_csrf_token($_POST['csrf_token'] ?? null);
+        $success = $this->saveBrandingSettings();
+        echo json_encode([
+            'success' => $success,
+            'message' => $success
+                ? 'Huisstijl-instellingen succesvol opgeslagen.'
+                : 'Kon de instellingen niet opslaan.'
+        ]);
+        exit;
+    }
+
+    private function processEmailTemplateUpdate(): void {
+        header(self::HEADER_JSON);
+        require_valid_csrf_token($_POST['csrf_token'] ?? null);
+        $success = $this->saveEmailTemplates();
+        echo json_encode([
+            'success' => $success,
+            'message' => $success
+                ? 'E-mail sjablonen succesvol opgeslagen.'
+                : 'Kon de e-mail sjablonen niet opslaan. Controleer de schrijfrechten.'
+        ]);
+        exit;
+    }
+
+    private function processRegistrationManagement(PDO $pdo): void {
+        require_valid_csrf_token($_POST['csrf_token'] ?? null);
+        $this->manageRegistration($pdo);
+        header(self::REDIRECT_ADMIN_REGISTRATIONS);
+        exit;
     }
 
     // Public gemaakt zodat andere controllers het ook kunnen gebruiken
@@ -833,7 +860,7 @@ class AdminController {
                 ? ['type' => 'info', 'text' => "Testmail is verstuurd naar {$userEmail}. Controleer je inbox en het logboek."]
                 : ['type' => 'danger', 'text' => "Testmail kon niet worden verstuurd. Fout: " . $sendResult];
         }
-        header("Location: ?page=admin#smtp");
+        header(self::REDIRECT_ADMIN_SMTP);
         exit;
     }
 
@@ -964,9 +991,9 @@ class AdminController {
             $_SESSION['role'] = $originalUser['role'];
             
             // Log de actie nu de originele sessie hersteld is
-            log_action('impersonate_stop', "Admin '{$_SESSION['email']}' heeft de overname van '{$impersonatedEmail}' beëindigd.");
+            log_action('impersonate_stop', "Admin '{$_SESSION['email']}' heeft de overname van '{$impersonatedEmail}' beÃ«indigd.");
         }
-        header("Location: ?page=admin");
+        header(self::REDIRECT_ADMIN);
         exit;
     }
 
@@ -992,7 +1019,7 @@ class AdminController {
         } else {
             $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Gebruiker niet gevonden.'];
         }
-        header("Location: ?page=admin");
+        header(self::REDIRECT_ADMIN);
         exit;
     }
 }

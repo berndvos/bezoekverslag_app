@@ -17,13 +17,15 @@ use PHPMailer\PHPMailer\Exception;
  * - Geen nieuwe ruimtes, geen PDF-generatie
  */
 class ClientController {
+    private const REDIRECT_CLIENT_VIEW_PREFIX = 'Location: ?page=client_view&id=';
+    private const REDIRECT_CLIENT_LOGIN = 'Location: ?page=client_login';
 
     /** LOGIN (publiek) */
     public function login() {
         // eigen client-sessie naast interne sessie toegestaan
         if (!empty($_SESSION['client_id'])) {
             $vid = $_SESSION['bezoekverslag_id'] ?? null;
-            header("Location: ?page=client_view&id=" . urlencode((string)$vid));
+            header(self::REDIRECT_CLIENT_VIEW_PREFIX . urlencode((string)$vid));
             exit;
         }
 
@@ -48,7 +50,7 @@ class ClientController {
                 $pdo->prepare("UPDATE client_access SET last_login = NOW() WHERE id = ?")
                     ->execute([$client['id']]);
 
-                header("Location: ?page=client_view&id=" . $client['bezoekverslag_id']);
+                header(self::REDIRECT_CLIENT_VIEW_PREFIX . $client['bezoekverslag_id']);
                 exit;
             } else {
                 $error = "Ongeldig e-mailadres of wachtwoord.";
@@ -61,14 +63,14 @@ class ClientController {
     /** LOGOUT (publiek) */
     public function logout() {
         unset($_SESSION['client_id'], $_SESSION['client_name'], $_SESSION['bezoekverslag_id'], $_SESSION['client_can_edit']);
-        header("Location: ?page=client_login");
+        header(self::REDIRECT_CLIENT_LOGIN);
         exit;
     }
 
     /** VIEW (publiek) – id = verslag_id */
     public function view($verslag_id) {
         if (empty($_SESSION['client_id'])) {
-            header("Location: ?page=client_login");
+            header(self::REDIRECT_CLIENT_LOGIN);
             exit;
         }
         if ((int)$verslag_id !== (int)($_SESSION['bezoekverslag_id'] ?? 0)) {
@@ -97,7 +99,7 @@ class ClientController {
     /** UPDATE (publiek) – beperkte updates door klant */
     public function update($verslag_id) {
         if (empty($_SESSION['client_id'])) {
-            header("Location: ?page=client_login");
+            header(self::REDIRECT_CLIENT_LOGIN);
             exit;
         }
         if ((int)$verslag_id !== (int)($_SESSION['bezoekverslag_id'] ?? 0)) {
@@ -225,7 +227,7 @@ class ClientController {
         // --- E-mailnotificatie naar accountmanager ---
         $this->sendUpdateNotification($pdo, $verslag_id);
 
-        header("Location: ?page=client_view&id=" . $verslag_id);
+        header(self::REDIRECT_CLIENT_VIEW_PREFIX . $verslag_id);
         exit;
     }
 
