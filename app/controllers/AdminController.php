@@ -17,6 +17,7 @@ class AdminController {
     private const REDIRECT_ADMIN_SMTP = 'Location: ?page=admin#smtp';
     private const HEADER_JSON = 'Content-Type: application/json';
     private const BRANDING_CONFIG_RELATIVE_PATH = '/../../config/branding.php';
+    private const PUBLIC_UPLOADS_PATH = '/../../public/uploads';
 
     /** Gebruikersoverzicht */
     public function users() {
@@ -476,7 +477,7 @@ class AdminController {
     private function getSystemStatus() {
         $status = [];
         $storageDir = __DIR__ . '/../../storage';
-        $uploadsDir = __DIR__ . '/../../public/uploads';
+        $uploadsDir = __DIR__ . self::PUBLIC_UPLOADS_PATH;
 
         // Check schrijfbaarheid
         $status['storage_writable'] = is_writable($storageDir);
@@ -547,7 +548,7 @@ class AdminController {
 
         // Verwijder de foto-mappen van de server
         foreach ($ruimtes as $ruimte) {
-            $dir = __DIR__ . '/../../public/uploads/ruimte_' . $ruimte['id'];
+            $dir = __DIR__ . self::PUBLIC_UPLOADS_PATH . '/ruimte_' . $ruimte['id'];
             if (is_dir($dir)) {
                 $files = new RecursiveIteratorIterator(
                     new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
@@ -684,7 +685,7 @@ class AdminController {
         $ruimtes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($ruimtes as $ruimte) {
-            $dir = __DIR__ . '/../../public/uploads/ruimte_' . $ruimte['id'];
+            $dir = __DIR__ . self::PUBLIC_UPLOADS_PATH . '/ruimte_' . $ruimte['id'];
             if (is_dir($dir)) {
                 // Deze code is vereenvoudigd; een robuustere functie zou recursief bestanden verwijderen.
                 // Voor nu gaan we ervan uit dat dit voldoende is.
@@ -698,7 +699,7 @@ class AdminController {
 
     private function handleLogoUpload() {
         if (isset($_FILES['company_logo']) && $_FILES['company_logo']['error'] === UPLOAD_ERR_OK) {
-            $uploadDir = __DIR__ . '/../../public/uploads/branding/';
+            $uploadDir = __DIR__ . self::PUBLIC_UPLOADS_PATH . '/branding/';
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0777, true);
             }

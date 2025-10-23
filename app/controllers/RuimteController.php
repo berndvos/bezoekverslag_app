@@ -4,6 +4,10 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../helpers/auth_helpers.php';
 
 class RuimteController {
+    private const HEADER_JSON = 'Content-Type: application/json';
+    private const PUBLIC_PATH = '/../../public/';
+    private const REDIRECT_DASHBOARD = 'Location: ?page=dashboard';
+    private const REDIRECT_EDIT_PREFIX = 'Location: ?page=bewerk&id=';
 
     /** Nieuwe ruimte toevoegen */
     public function create($verslag_id) {
@@ -56,7 +60,7 @@ class RuimteController {
     public function save() {
         requireRole(['accountmanager', 'admin', 'poweruser']);
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: ?page=dashboard");
+            header(self::REDIRECT_DASHBOARD);
             exit;
         }
 
@@ -88,7 +92,7 @@ class RuimteController {
             $redirectUrl = '?page=ruimte_new&verslag_id=' . $verslag_id;
         }
 
-        header('Content-Type: application/json');
+        header(self::HEADER_JSON);
         echo json_encode(['success' => true, 'message' => 'Ruimte succesvol aangemaakt.', 'redirect' => $redirectUrl]);
         exit;
     }
@@ -121,7 +125,7 @@ class RuimteController {
                 $redirectUrl = '?page=ruimte_new&verslag_id=' . $verslag_id;
             }
 
-            header('Content-Type: application/json');
+            header(self::HEADER_JSON);
             echo json_encode(['success' => true, 'message' => 'Wijzigingen opgeslagen.', 'redirect' => $redirectUrl]);
             exit;
         }
@@ -160,7 +164,7 @@ class RuimteController {
         // PDF verouderd markeren
         $this->markPdfOutdated($verslag_id);
 
-        header("Location: ?page=bewerk&id=" . (int)$verslag_id);
+        header(self::REDIRECT_EDIT_PREFIX . (int)$verslag_id);
         exit;
     }
 
@@ -172,7 +176,7 @@ class RuimteController {
             echo json_encode(['success' => false, 'message' => 'Ongeldig verzoek.']);
             exit;
         }
-        header('Content-Type: application/json');
+        header(self::HEADER_JSON);
 
         $pdo = Database::getConnection();
 
@@ -187,7 +191,7 @@ class RuimteController {
         }
 
         // 2. Verwijder het fysieke bestand
-        $fullPath = __DIR__ . '/../../public/' . $foto['pad'];
+        $fullPath = __DIR__ . self::PUBLIC_PATH . $foto['pad'];
         if (file_exists($fullPath)) {
             unlink($fullPath);
         }
@@ -293,3 +297,7 @@ class RuimteController {
         }
     }
 }
+
+
+
+

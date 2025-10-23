@@ -19,6 +19,7 @@ use PHPMailer\PHPMailer\Exception;
 class ClientController {
     private const REDIRECT_CLIENT_VIEW_PREFIX = 'Location: ?page=client_view&id=';
     private const REDIRECT_CLIENT_LOGIN = 'Location: ?page=client_login';
+    private const PUBLIC_UPLOAD_BASE = '/../../public/';
 
     /** LOGIN (publiek) */
     public function login() {
@@ -174,7 +175,7 @@ class ClientController {
 
             // Foto-upload toegestaan (aanvullen bij bestaande ruimte)
             if (!empty($_FILES['files']['name'][0])) {
-                $uploadDir = __DIR__ . '/../../public/uploads/client/' . $verslag_id . '/' . $ruimte_id . '/';
+            $uploadDir = __DIR__ . self::PUBLIC_UPLOAD_BASE . 'uploads/client/' . $verslag_id . '/' . $ruimte_id . '/';
                 if (!extension_loaded('fileinfo')) {
                     $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Uploads zijn momenteel niet beschikbaar.'];
                 } elseif (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {

@@ -26,6 +26,10 @@ require_once __DIR__ . '/../app/controllers/RuimteController.php';
 require_once __DIR__ . '/../app/controllers/ApiController.php';
 require_once __DIR__ . '/../app/controllers/UpdateController.php';
 
+const ROUTE_DASHBOARD = '?page=dashboard';
+const ROUTE_ADMIN = '?page=admin';
+const ROUTE_CLIENT_LOGIN = '?page=client_login';
+
 $page = $_GET['page'] ?? 'dashboard';
 
 // Instantieer controllers
@@ -64,49 +68,49 @@ switch ($page) {
 
     case 'bewerk':
         requireLogin();
-        if (!isset($_GET['id'])) { header("Location: ?page=dashboard"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_DASHBOARD); exit; }
         $bezoekverslagController->bewerk((int)$_GET['id']);
         break;
 
     case 'submit':
         requireLogin();
-        if (!isset($_GET['id'])) { header("Location: ?page=dashboard"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_DASHBOARD); exit; }
         $bezoekverslagController->generatePdf((int)$_GET['id']);
         break;
 
     case 'reset_client_password':
         requireLogin();
-        if (!isset($_GET['id'])) { header("Location: ?page=dashboard"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_DASHBOARD); exit; }
         $bezoekverslagController->resetClientPassword((int)$_GET['id']);
         break;
 
     case 'delete_verslag':
         requireLogin();
-        if (!isset($_GET['id'])) { header("Location: ?page=dashboard"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_DASHBOARD); exit; }
         $bezoekverslagController->delete((int)$_GET['id']);
         break;
     case 'download_project_files':
         requireLogin();
-        if (!isset($_GET['id'])) { header("Location: ?page=dashboard"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_DASHBOARD); exit; }
         $bezoekverslagController->downloadProjectFilesAsZip((int)$_GET['id']);
         break;
 
     case 'download_photos':
         requireLogin();
-        if (!isset($_GET['id'])) { header("Location: ?page=dashboard"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_DASHBOARD); exit; }
         $bezoekverslagController->downloadPhotosAsZip((int)$_GET['id']);
         break;
 
     /* -------- RUIMTES -------- */
     case 'ruimte_new':
         requireLogin();
-        if (!isset($_GET['verslag_id'])) { header("Location: ?page=dashboard"); exit; }
+        if (!isset($_GET['verslag_id'])) { header('Location: ' . ROUTE_DASHBOARD); exit; }
         $ruimteController->create((int)$_GET['verslag_id']);
         break;
 
     case 'ruimte_edit':
         requireLogin();
-        if (!isset($_GET['id'])) { header("Location: ?page=dashboard"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_DASHBOARD); exit; }
         $ruimteController->edit((int)$_GET['id']);
         break;
 
@@ -118,13 +122,13 @@ switch ($page) {
 
     case 'ruimte_delete':
         requireLogin();
-        if (!isset($_GET['id'])) { header("Location: ?page=dashboard"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_DASHBOARD); exit; }
         $ruimteController->delete((int)$_GET['id']);
         break;
 
     case 'foto_delete':
         requireLogin();
-        if (!isset($_GET['id'])) { header("Location: ?page=dashboard"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_DASHBOARD); exit; }
         $ruimteController->deleteFoto((int)$_GET['id']);
         break;
 
@@ -136,19 +140,19 @@ switch ($page) {
 
     case 'admin_delete_user':
         requireLogin();
-        if (!isset($_GET['id'])) { header("Location: ?page=admin"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_ADMIN); exit; }
         $adminController->deleteUser((int)$_GET['id']);
         break;
     
     case 'admin_reset_password':
         requireLogin();
-        if (!isset($_GET['id'])) { header("Location: ?page=admin"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_ADMIN); exit; }
         $adminController->adminResetPassword((int)$_GET['id']);
         break;
 
     case 'admin_impersonate':
         requireLogin();
-        if (!isset($_GET['id'])) { header("Location: ?page=admin"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_ADMIN); exit; }
         $adminController->impersonateUser((int)$_GET['id']);
         break;
 
@@ -158,19 +162,19 @@ switch ($page) {
 
     case 'admin_restore_verslag':
         requireLogin();
-        if (!isset($_GET['id'])) { header("Location: ?page=admin"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_ADMIN); exit; }
         $adminController->restoreVerslag((int)$_GET['id']);
         break;
 
     case 'admin_permanent_delete_verslag':
         requireLogin();
-        if (!isset($_GET['id'])) { header("Location: ?page=admin"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_ADMIN); exit; }
         $adminController->permanentDeleteVerslag((int)$_GET['id']);
         break;
 
     case 'admin_reset_client_password':
         requireLogin();
-        if (!isset($_GET['id'])) { header("Location: ?page=admin"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_ADMIN); exit; }
         $adminController->resetClientPassword((int)$_GET['id']);
         break;
 
@@ -181,13 +185,13 @@ switch ($page) {
 
     case 'admin_revoke_client':
         requireLogin();
-        if (!isset($_GET['id'])) { header("Location: ?page=admin"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_ADMIN); exit; }
         $adminController->revokeClientAccess((int)$_GET['id']);
         break;
 
     case 'admin_extend_client':
         requireLogin();
-        if (!isset($_GET['id'])) { header("Location: ?page=admin"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_ADMIN); exit; }
         $adminController->extendClientAccess((int)$_GET['id']);
         break;
 
@@ -211,7 +215,7 @@ switch ($page) {
         break;
 
     case 'client_view':
-        if (!isset($_GET['id'])) { header("Location: ?page=client_login"); exit; }
+        if (!isset($_GET['id'])) { header('Location: ' . ROUTE_CLIENT_LOGIN); exit; }
         $clientController->view((int)$_GET['id']);
         break;
 
@@ -228,6 +232,9 @@ switch ($page) {
         $apiController->postcodeLookup();
         break;
     default:
-        header("Location: ?page=dashboard");
+        header('Location: ' . ROUTE_DASHBOARD);
         exit;
 }
+
+
+

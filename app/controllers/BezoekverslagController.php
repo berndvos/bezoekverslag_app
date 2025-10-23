@@ -8,6 +8,7 @@ use Dompdf\Options;
 class BezoekverslagController {
     private const REDIRECT_EDIT_PREFIX = 'Location: ?page=bewerk&id=';
     private const REDIRECT_DASHBOARD = 'Location: ?page=dashboard';
+    private const PUBLIC_PATH = '/../../public/';
     private const SAFE_FILENAME_PATTERN = '/[^a-zA-Z0-9_-]/';
     private $sectionFields = [
         'relatie' => ['klantnaam', 'projecttitel', 'straatnaam', 'huisnummer', 'huisnummer_toevoeging', 'postcode', 'plaats', 'kvk', 'btw'],
@@ -559,7 +560,7 @@ class BezoekverslagController {
         }
 
         foreach ($files as $file) {
-            $fullPath = __DIR__ . '/../../public/' . $file['pad'];
+            $fullPath = __DIR__ . self::PUBLIC_PATH . $file['pad'];
             if (file_exists($fullPath)) {
                 $zip->addFile($fullPath, $file['bestandsnaam']);
             }
@@ -578,7 +579,7 @@ class BezoekverslagController {
     private function handleProjectFileUploads($pdo, $verslag_id) {
         $errors = [];
         $successCount = 0;
-        $uploadDir = __DIR__ . '/../../public/uploads/project_' . $verslag_id . '/';
+        $uploadDir = __DIR__ . self::PUBLIC_PATH . 'uploads/project_' . $verslag_id . '/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }
@@ -631,7 +632,7 @@ class BezoekverslagController {
 
         if ($file) {
             // Verwijder bestand van server
-            $fullPath = __DIR__ . '/../../public/' . $file['pad'];
+            $fullPath = __DIR__ . self::PUBLIC_PATH . $file['pad'];
             if (file_exists($fullPath)) {
                 @unlink($fullPath);
             }
@@ -689,7 +690,7 @@ class BezoekverslagController {
         $photoCounters = [];
         foreach ($photos as $photo) {
             $ruimteNaam = preg_replace(self::SAFE_FILENAME_PATTERN, '_', $photo['ruimte_naam']);
-            $fullPhotoPath = __DIR__ . '/../../public/' . $photo['foto_pad'];
+            $fullPhotoPath = __DIR__ . self::PUBLIC_PATH . $photo['foto_pad'];
 
             if (file_exists($fullPhotoPath)) {
                 // Bepaal het volgnummer voor de foto binnen de ruimte
