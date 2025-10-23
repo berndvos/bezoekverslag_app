@@ -12,6 +12,7 @@
     <?php endif; ?>
 
     <form method="post">
+      <?= csrf_field() ?>
       <div class="mb-3">
         <label class="form-label">Nieuw wachtwoord</label>
         <input type="password" name="password" class="form-control" required minlength="8" autofocus>

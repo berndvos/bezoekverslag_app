@@ -16,6 +16,7 @@
                 <?php endif; ?>
 
                 <form method="post">
+                    <?= csrf_field() ?>
                     <input type="hidden" name="token" value="<?= htmlspecialchars($_GET['token'] ?? '') ?>">
                     <div class="mb-3">
                         <label for="password" class="form-label">Nieuw wachtwoord</label>

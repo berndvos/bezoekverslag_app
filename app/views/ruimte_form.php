@@ -76,6 +76,7 @@ if ($schema_version == 2) {
         $formAction = $isEdit ? "?page=ruimte_edit&id=" . (int)$ruimte['id'] : "?page=ruimte_save&verslag_id=" . (int)($ruimte['verslag_id'] ?? 0);
       ?> 
       <form method="post" action="<?= $formAction ?>" enctype="multipart/form-data" id="ruimte-form">
+        <?= csrf_field() ?>
         <!-- RUIMTEGEGEVENS -->
         <div id="ruimte" class="section-anchor card shadow-sm mb-4">
           <div class="card-header bg-success text-white">
@@ -537,7 +538,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             fetch(`?page=foto_delete&id=${fotoId}`, {
-                method: 'POST', // or 'DELETE', but POST is fine
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                },
+                body: new URLSearchParams({ csrf_token: window.getCsrfToken() })
             })
             .then(response => response.json())
             .then(data => {

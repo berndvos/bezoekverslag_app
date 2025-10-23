@@ -12,6 +12,7 @@ $customBrandingStyles = ":root { --yld-primary: {$primaryColor}; --yld-primary-c
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
   <title>Bezoekverslag App</title>
   
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -21,6 +22,12 @@ $customBrandingStyles = ":root { --yld-primary: {$primaryColor}; --yld-primary-c
   <style>
     <?= $customBrandingStyles ?>
   </style>
+  <script>
+    window.getCsrfToken = function () {
+        const meta = document.querySelector('meta[name=\"csrf-token\"]');
+        return meta ? meta.getAttribute('content') : '';
+    };
+  </script>
 </head>
 <body>
 

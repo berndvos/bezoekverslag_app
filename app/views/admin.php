@@ -76,19 +76,19 @@
                         </button>
                         <!-- Overnemen knop -->
                         <?php if (isAdmin() && ($u['id'] ?? 0) !== ($_SESSION['user_id'] ?? -1)): ?>
-                          <a href="?page=admin_impersonate&id=<?= (int)$u['id'] ?>" class="btn btn-sm btn-outline-warning" title="Login overnemen">
+                          <a href="<?= csrf_url('?page=admin_impersonate&id=' . (int)$u['id']) ?>" class="btn btn-sm btn-outline-warning" title="Login overnemen">
                             <i class="bi bi-person-fill-gear"></i>
                           </a>
                         <?php endif; ?>
                         <!-- Wachtwoord reset knop -->
                         <?php if (isAdmin() && ($u['id'] ?? 0) !== ($_SESSION['user_id'] ?? -1)): ?>
-                          <a href="?page=admin_reset_password&id=<?= (int)$u['id'] ?>" class="btn btn-sm btn-outline-secondary" title="Stuur wachtwoord reset" onclick="return confirm('Weet je zeker dat je een wachtwoord-reset mail wilt sturen naar deze gebruiker?')">
+                          <a href="<?= csrf_url('?page=admin_reset_password&id=' . (int)$u['id']) ?>" class="btn btn-sm btn-outline-secondary" title="Stuur wachtwoord reset" onclick="return confirm('Weet je zeker dat je een wachtwoord-reset mail wilt sturen naar deze gebruiker?')">
                             <i class="bi bi-envelope-at"></i>
                           </a>
                         <?php endif; ?>
                         <!-- Verwijderen knop -->
                         <?php if (isAdmin() && ($u['id'] ?? 0) !== ($_SESSION['user_id'] ?? -1)): ?>
-                          <a href="?page=admin_delete_user&id=<?= (int)$u['id'] ?>" class="btn btn-sm btn-outline-danger"
+                          <a href="<?= csrf_url('?page=admin_delete_user&id=' . (int)$u['id']) ?>" class="btn btn-sm btn-outline-danger"
                              onclick="return confirm('Weet je zeker dat je deze gebruiker wilt verwijderen?')">
                             <i class="bi bi-trash"></i>
                           </a>
@@ -100,7 +100,8 @@
                     <div class="modal fade" id="editUserModal<?= $u['id'] ?>" tabindex="-1" aria-hidden="true">
                       <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
-                          <form method="post">
+                      <form method="post">
+                        <?= csrf_field() ?>
                             <div class="modal-header bg-primary text-white">
                               <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Gebruiker bewerken</h5>
                               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -174,6 +175,7 @@
                       <td><?= htmlspecialchars(date('d-m-Y H:i', strtotime($pUser['created_at']))) ?></td>
                       <td class="text-center">
                         <form method="post" class="d-inline">
+                            <?= csrf_field() ?>
                           <input type="hidden" name="manage_registration" value="1">
                           <input type="hidden" name="user_id" value="<?= $pUser['id'] ?>">
                           <button type="submit" name="action" value="approve" class="btn btn-sm btn-success" title="Goedkeuren"><i class="bi bi-check-lg"></i></button>
@@ -199,6 +201,7 @@
         <div class="card-header bg-primary text-white"><i class="bi bi-person-plus"></i> Nieuwe gebruiker aanmaken</div>
         <div class="card-body">
           <form method="post">
+            <?= csrf_field() ?>
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">Volledige naam</label>
@@ -219,6 +222,7 @@
                 </select>
               </div>
             </div>
+            <p class="text-muted small mt-3 mb-0">Nieuwe gebruikers ontvangen automatisch een e-mail om hun wachtwoord in te stellen.</p>
             <div class="text-end mt-4">
               <button type="submit" name="create_user" class="btn btn-primary">
                 <i class="bi bi-person-plus"></i> Gebruiker toevoegen
@@ -233,7 +237,7 @@
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
           <span><i class="bi bi-trash"></i> Prullenbak</span>
           <?php if (!empty($deletedVerslagen)): ?>
-            <a href="?page=admin_empty_trash" class="btn btn-sm btn-outline-light" onclick="return confirm('Weet je zeker dat je alle verslagen ouder dan 30 dagen permanent wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.')">
+            <a href="<?= csrf_url('?page=admin_empty_trash') ?>" class="btn btn-sm btn-outline-light" onclick="return confirm('Weet je zeker dat je alle verslagen ouder dan 30 dagen permanent wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.')">
               <i class="bi bi-trash2-fill"></i> Leeg items ouder dan 30 dagen
             </a>
           <?php endif; ?>
@@ -257,8 +261,8 @@
                       <td><?= htmlspecialchars($verslag['klantnaam']) ?></td>
                       <td><?= htmlspecialchars(date('d-m-Y H:i', strtotime($verslag['deleted_at']))) ?></td>
                       <td class="text-center d-flex justify-content-center gap-1">
-                        <a href="?page=admin_restore_verslag&id=<?= $verslag['id'] ?>" class="btn btn-sm btn-outline-success" title="Herstellen"><i class="bi bi-arrow-counterclockwise"></i></a>
-                        <a href="?page=admin_permanent_delete_verslag&id=<?= $verslag['id'] ?>" class="btn btn-sm btn-outline-danger" title="Permanent verwijderen" onclick="return confirm('Weet je zeker dat je dit verslag permanent wilt verwijderen? Alle bijbehorende ruimtes en foto\'s worden ook verwijderd. Deze actie kan niet ongedaan worden gemaakt.')"><i class="bi bi-x-octagon-fill"></i></a>
+                        <a href="<?= csrf_url('?page=admin_restore_verslag&id=' . (int)$verslag['id']) ?>" class="btn btn-sm btn-outline-success" title="Herstellen"><i class="bi bi-arrow-counterclockwise"></i></a>
+                        <a href="<?= csrf_url('?page=admin_permanent_delete_verslag&id=' . (int)$verslag['id']) ?>" class="btn btn-sm btn-outline-danger" title="Permanent verwijderen" onclick="return confirm('Weet je zeker dat je dit verslag permanent wilt verwijderen? Alle bijbehorende ruimtes en foto\'s worden ook verwijderd. Deze actie kan niet ongedaan worden gemaakt.')"><i class="bi bi-x-octagon-fill"></i></a>
                       </td>
                     </tr>
                   <?php endforeach; ?>
@@ -301,9 +305,9 @@
                         <?php endif; ?>
                       </td>
                       <td class="text-center d-flex justify-content-center gap-1">
-                        <a href="?page=admin_reset_client_password&id=<?= $portal['verslag_id'] ?>" class="btn btn-sm btn-outline-warning" title="Wachtwoord resetten" onclick="return confirm('Weet je zeker dat je het wachtwoord voor deze klant wilt resetten?')"><i class="bi bi-key-fill"></i></a>
-                        <a href="?page=admin_extend_client&id=<?= $portal['verslag_id'] ?>" class="btn btn-sm btn-outline-success" title="Verleng met 14 dagen"><i class="bi bi-calendar-plus"></i></a>
-                        <a href="?page=admin_revoke_client&id=<?= $portal['verslag_id'] ?>" class="btn btn-sm btn-outline-danger" title="Toegang intrekken" onclick="return confirm('Weet je zeker dat je de toegang voor deze klant wilt intrekken?')"><i class="bi bi-x-circle"></i></a>
+                        <a href="<?= csrf_url('?page=admin_reset_client_password&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-warning" title="Wachtwoord resetten" onclick="return confirm('Weet je zeker dat je het wachtwoord voor deze klant wilt resetten?')"><i class="bi bi-key-fill"></i></a>
+                        <a href="<?= csrf_url('?page=admin_extend_client&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-success" title="Verleng met 14 dagen"><i class="bi bi-calendar-plus"></i></a>
+                        <a href="<?= csrf_url('?page=admin_revoke_client&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-danger" title="Toegang intrekken" onclick="return confirm('Weet je zeker dat je de toegang voor deze klant wilt intrekken?')"><i class="bi bi-x-circle"></i></a>
                       </td>
                     </tr>
                   <?php endforeach; ?>
@@ -325,13 +329,14 @@
             <div class="col-lg-6">
               <h6>Database Back-up</h6>
               <p class="text-muted small">Download een .sql-bestand van de volledige database.</p>
-              <a href="?page=admin_backup_db" class="btn btn-secondary"><i class="bi bi-database-down"></i> Back-up downloaden</a>
+              <a href="<?= csrf_url('?page=admin_backup_db') ?>" class="btn btn-secondary"><i class="bi bi-database-down"></i> Back-up downloaden</a>
             </div>
             <!-- Logo Upload -->
             <div class="col-lg-6">
               <h6>Logo uploaden</h6>
               <p class="text-muted small">Upload een bedrijfslogo (.png, .jpg, .svg) voor in de header en PDF's.</p>
               <form method="post" enctype="multipart/form-data">
+                <?= csrf_field() ?>
                 <div class="input-group">
                   <input type="file" name="company_logo" class="form-control" accept="image/png, image/jpeg, image/svg+xml">
                   <button class="btn btn-secondary" type="submit" name="upload_logo"><i class="bi bi-upload"></i> Uploaden</button>
@@ -346,6 +351,7 @@
                 <h6>Huisstijlkleuren</h6>
                 <p class="text-muted small">Pas de primaire kleur van de applicatie aan. Kies ook een contrasterende tekstkleur (donker of licht) voor op de knoppen.</p>
                 <form method="post" id="branding-form">
+                  <?= csrf_field() ?>
                     <input type="hidden" name="update_branding" value="1">
                     <div class="row align-items-end">
                         <div class="col-auto">
@@ -425,7 +431,11 @@
         <div class="card-header bg-primary text-white"><i class="bi bi-cloud-arrow-down"></i> Applicatie Updates</div>
         <div class="card-body">
             <div id="update-checker">
-                <p>Controleer of er een nieuwe versie van de applicatie beschikbaar is via GitHub.</p>
+                <p class="mb-2">Controleer of er een nieuwe versie van de applicatie beschikbaar is via GitHub.</p>
+                <div class="alert alert-warning small">
+                    <i class="bi bi-shield-lock"></i>
+                    Automatische updates zijn uitgeschakeld. Gebruik deze controle uitsluitend om te zien of er een nieuwe release beschikbaar is en voer updates handmatig uit.
+                </div>
                 <button id="check-for-updates" class="btn btn-secondary"><i class="bi bi-arrow-repeat"></i> Controleren op updates</button>
             </div>
             <div id="update-result" class="mt-3" style="display: none;"></div>
@@ -473,7 +483,7 @@
               </div>
             </div>
             <div class="text-end mt-4 d-flex justify-content-end gap-2">
-                <a href="?page=admin_test_smtp" class="btn btn-outline-secondary" onclick="return confirm('Let op: de testmail wordt verstuurd met de laatst OPGESLAGEN instellingen. Weet je het zeker?')">
+                <a href="<?= csrf_url('?page=admin_test_smtp') ?>" class="btn btn-outline-secondary" onclick="return confirm('Let op: de testmail wordt verstuurd met de laatst OPGESLAGEN instellingen. Weet je het zeker?')">
                     <i class="bi bi-send"></i> Testmail versturen
                 </a>
                 <button type="submit" name="update_smtp" value="1" class="btn btn-primary" disabled>
@@ -489,6 +499,7 @@
         <div class="card-header bg-primary text-white"><i class="bi bi-envelope-paper"></i> E-mail Sjablonen</div>
         <div class="card-body">
           <form method="post" id="email-templates-form">
+            <?= csrf_field() ?>
             <p class="text-muted small">Pas hier de teksten aan voor de e-mails die automatisch worden verstuurd. Gebruik de variabelen (bijv. <code>{user_fullname}</code>) om dynamische informatie in te voegen.</p>
 
             <div class="accordion" id="emailTemplateAccordion">
@@ -691,7 +702,8 @@ document.addEventListener('DOMContentLoaded', function() {
             updateResultDiv.style.display = 'block';
             updateResultDiv.innerHTML = '<p class="text-info"><i class="bi bi-info-circle"></i> Bezig met controleren op updates...</p>';
 
-      fetch('?page=admin_check_updates', {
+      const csrfToken = window.getCsrfToken();
+      fetch(`?page=admin_check_updates&csrf_token=${encodeURIComponent(csrfToken)}`, {
         method: 'GET',
         headers: {
           'X-Requested-With': 'XMLHttpRequest'
@@ -759,7 +771,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         this.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Update wordt uitgevoerd... (dit kan enkele minuten duren)`;
                         updateResultDiv.innerHTML += '<div id="update-progress" class="alert alert-warning mt-3"><p>Update gestart. Sluit dit venster niet.</p><p>Stap 1/5: Back-up maken...</p></div>';
 
-                        fetch('?page=admin_perform_update', { method: 'POST' })
+                        fetch('?page=admin_perform_update', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: new URLSearchParams({ csrf_token: window.getCsrfToken() })
+                        })
                             .then(response => response.json())
                             .then(updateData => {
                                 const progressDiv = document.getElementById('update-progress');

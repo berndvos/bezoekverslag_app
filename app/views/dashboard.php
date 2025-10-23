@@ -85,7 +85,7 @@
                                 </a>
                             <?php endif; ?>
                             <?php if (isAdmin()): ?>
-                                <a href="?page=delete_verslag&id=<?= $v['id'] ?>" class="btn btn-sm btn-outline-danger" title="Verplaats naar prullenbak" onclick="return confirm('Weet je zeker dat je dit verslag naar de prullenbak wilt verplaatsen?')">
+                                <a href="<?= csrf_url('?page=delete_verslag&id=' . (int)$v['id']) ?>" class="btn btn-sm btn-outline-danger" title="Verplaats naar prullenbak" onclick="return confirm('Weet je zeker dat je dit verslag naar de prullenbak wilt verplaatsen?')">
                                 <i class="bi bi-trash"></i>
                                 </a>
                             <?php endif; ?>
@@ -128,9 +128,9 @@
                                         </span>
                                     </td>
                                     <td class="text-center d-flex justify-content-center gap-1">
-                                        <a href="?page=admin_reset_client_password&id=<?= $portal['verslag_id'] ?>" class="btn btn-sm btn-outline-warning" title="Wachtwoord resetten" onclick="return confirm('Weet je zeker dat je het wachtwoord voor deze klant wilt resetten?')"><i class="bi bi-key-fill"></i></a>
-                                        <a href="?page=admin_extend_client&id=<?= $portal['verslag_id'] ?>" class="btn btn-sm btn-outline-success" title="Verleng met 14 dagen"><i class="bi bi-calendar-plus"></i></a>
-                                        <a href="?page=admin_revoke_client&id=<?= $portal['verslag_id'] ?>" class="btn btn-sm btn-outline-danger" title="Toegang intrekken" onclick="return confirm('Weet je zeker dat je de toegang voor deze klant wilt intrekken?')"><i class="bi bi-x-circle"></i></a>
+                                        <a href="<?= csrf_url('?page=admin_reset_client_password&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-warning" title="Wachtwoord resetten" onclick="return confirm('Weet je zeker dat je het wachtwoord voor deze klant wilt resetten?')"><i class="bi bi-key-fill"></i></a>
+                                        <a href="<?= csrf_url('?page=admin_extend_client&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-success" title="Verleng met 14 dagen"><i class="bi bi-calendar-plus"></i></a>
+                                        <a href="<?= csrf_url('?page=admin_revoke_client&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-danger" title="Toegang intrekken" onclick="return confirm('Weet je zeker dat je de toegang voor deze klant wilt intrekken?')"><i class="bi bi-x-circle"></i></a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

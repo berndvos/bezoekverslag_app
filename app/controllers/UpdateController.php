@@ -8,6 +8,7 @@ class UpdateController {
     // VERANDER DIT NAAR JE EIGEN GITHUB REPOSITORY
     private const GITHUB_REPO = 'berndvos/bezoekverslag_app'; // Voorbeeld: 'gebruikersnaam/repository-naam'
     private const GITHUB_API_URL = 'https://api.github.com/repos/';
+    private const ENABLE_SELF_UPDATE = false;
 
     /**
      * AJAX endpoint om te controleren op updates.
@@ -15,6 +16,14 @@ class UpdateController {
     public function check() {
         header('Content-Type: application/json');
         requireRole(['admin', 'poweruser']);
+        $token = $_POST['csrf_token'] ?? $_GET['csrf_token'] ?? null;
+        require_valid_csrf_token($token);
+
+        if (!self::ENABLE_SELF_UPDATE) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Automatische updates zijn uitgeschakeld. Voer updates handmatig uit.']);
+            exit;
+        }
 
         try {
             // Controleer of de cURL-extensie is geladen
@@ -120,6 +129,13 @@ class UpdateController {
     public function performUpdate() {
         header('Content-Type: application/json');
         requireRole(['admin', 'poweruser']);
+        $token = $_POST['csrf_token'] ?? $_GET['csrf_token'] ?? null;
+        require_valid_csrf_token($token);
+        if (!self::ENABLE_SELF_UPDATE) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Automatische updates zijn uitgeschakeld. Voer updates handmatig uit.']);
+            exit;
+        }
         set_time_limit(300); // Verhoog de executietijd voor het downloaden en uitpakken
 
         $backupDir = __DIR__ . '/../../storage/backups/update_' . date('Y-m-d_H-i-s');

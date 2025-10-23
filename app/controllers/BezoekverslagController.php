@@ -72,6 +72,7 @@ class BezoekverslagController {
         $pdo = Database::getConnection();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_valid_csrf_token($_POST['csrf_token'] ?? null);
             $stmt = $pdo->prepare("
                 INSERT INTO bezoekverslag (klantnaam, projecttitel, created_by, created_at)
                 VALUES (?, ?, ?, NOW())
@@ -101,6 +102,7 @@ class BezoekverslagController {
 
         // Als er een POST request is, sla de data op
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_valid_csrf_token($_POST['csrf_token'] ?? null);
             header('Content-Type: application/json');
             
             // Toegangscontrole voor POST requests: alleen de eigenaar of een admin mag opslaan.
@@ -335,6 +337,7 @@ class BezoekverslagController {
     /* ================= VERWIJDEREN ================= */
     public function delete($id) {
         requireRole(['admin', 'poweruser', 'accountmanager']);
+        require_valid_csrf_token($_GET['csrf_token'] ?? null);
         $pdo = Database::getConnection();
 
         // Een accountmanager mag alleen zijn eigen verslagen verwijderen
@@ -486,6 +489,8 @@ class BezoekverslagController {
     /* ================= CLIENT PASSWORD RESET ================= */
     public function resetClientPassword($id) {
         requireRole(['admin', 'poweruser', 'accountmanager']);
+        $token = $_POST['csrf_token'] ?? $_GET['csrf_token'] ?? null;
+        require_valid_csrf_token($token);
         $pdo = Database::getConnection();
 
         $stmt = $pdo->prepare("SELECT id FROM client_access WHERE bezoekverslag_id = ?");

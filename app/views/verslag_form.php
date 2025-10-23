@@ -1,6 +1,7 @@
 <h3>Nieuw bezoekverslag</h3>
 <?php include 'layout/header.php'; ?>
 <form method="post">
+  <?= csrf_field() ?>
   <div class="row g-3">
     <div class="col-md-6">
       <label class="form-label">Naam bezoekverslag *</label>

@@ -29,6 +29,7 @@ class ClientController {
 
         $error = '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_valid_csrf_token($_POST['csrf_token'] ?? null);
             $pdo = Database::getConnection();
             $stmt = $pdo->prepare("SELECT * FROM client_access WHERE email = ?");
             $stmt->execute([$_POST['email']]);
@@ -74,6 +75,7 @@ class ClientController {
             die("<div style='padding:20px;font-family:sans-serif;color:#b00;'>Geen toegang tot dit verslag.</div>");
         }
 
+        require_valid_csrf_token($_POST['csrf_token'] ?? null);
         $pdo = Database::getConnection();
 
         // verslag
@@ -170,19 +172,48 @@ class ClientController {
 
             // Foto-upload toegestaan (aanvullen bij bestaande ruimte)
             if (!empty($_FILES['files']['name'][0])) {
-                $uploadDir = __DIR__ . '/../../public/uploads/ruimte/';
-                if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+                $uploadDir = __DIR__ . '/../../public/uploads/client/' . $verslag_id . '/' . $ruimte_id . '/';
+                if (!extension_loaded('fileinfo')) {
+                    $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Uploads zijn momenteel niet beschikbaar.'];
+                } elseif (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
+                    $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Uploadmap kon niet worden aangemaakt. Probeer het later opnieuw of neem contact op met uw accountmanager.'];
+                } else {
+                    $allowedMime = [
+                        'image/jpeg' => 'jpg',
+                        'image/png' => 'png',
+                        'image/gif' => 'gif',
+                        'image/webp' => 'webp',
+                    ];
+                    $maxSize = 10 * 1024 * 1024; // 10MB
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
 
-                for ($i = 0; $i < count($_FILES['files']['name']); $i++) {
-                    if ($_FILES['files']['error'][$i] === UPLOAD_ERR_OK) {
-                        $tmp = $_FILES['files']['tmp_name'][$i];
-                        $name = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $_FILES['files']['name'][$i]);
-                        move_uploaded_file($tmp, $uploadDir . $name);
+                    for ($i = 0, $total = count($_FILES['files']['name']); $i < $total; $i++) {
+                        if ($_FILES['files']['error'][$i] !== UPLOAD_ERR_OK) {
+                            continue;
+                        }
+                        if (!is_uploaded_file($_FILES['files']['tmp_name'][$i])) {
+                            continue;
+                        }
+                        $size = $_FILES['files']['size'][$i] ?? 0;
+                        if ($size <= 0 || $size > $maxSize) {
+                            continue;
+                        }
+                        $mime = finfo_file($finfo, $_FILES['files']['tmp_name'][$i]);
+                        if (!$mime || !isset($allowedMime[$mime])) {
+                            continue;
+                        }
 
-                        // registreer in foto-tabel indien aanwezig
+                        $filename = bin2hex(random_bytes(16)) . '.' . $allowedMime[$mime];
+                        $destination = $uploadDir . $filename;
+                        if (!move_uploaded_file($_FILES['files']['tmp_name'][$i], $destination)) {
+                            continue;
+                        }
+
                         $pdo->prepare("INSERT INTO foto (ruimte_id, pad, created_at) VALUES (?, ?, NOW())")
-                            ->execute([$ruimte_id, 'ruimte/' . $name]);
+                            ->execute([$ruimte_id, 'client/' . $verslag_id . '/' . $ruimte_id . '/' . $filename]);
                     }
+
+                    finfo_close($finfo);
                 }
             }
         }

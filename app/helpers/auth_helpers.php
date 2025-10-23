@@ -6,6 +6,44 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+if (!function_exists('csrf_token')) {
+    function csrf_token(): string {
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        return $_SESSION['csrf_token'];
+    }
+}
+
+if (!function_exists('csrf_field')) {
+    function csrf_field(): string {
+        return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') . '">';
+    }
+}
+
+if (!function_exists('csrf_url')) {
+    function csrf_url(string $url): string {
+        $separator = (strpos($url, '?') !== false) ? '&' : '?';
+        return $url . $separator . 'csrf_token=' . urlencode(csrf_token());
+    }
+}
+
+if (!function_exists('verify_csrf_token')) {
+    function verify_csrf_token(?string $token): bool {
+        $sessionToken = $_SESSION['csrf_token'] ?? '';
+        return is_string($token) && $sessionToken !== '' && hash_equals($sessionToken, $token);
+    }
+}
+
+if (!function_exists('require_valid_csrf_token')) {
+    function require_valid_csrf_token(?string $token): void {
+        if (!verify_csrf_token($token)) {
+            http_response_code(419);
+            exit('Ongeldig CSRF token. Vernieuw de pagina en probeer opnieuw.');
+        }
+    }
+}
+
 if (!function_exists('requireLogin')) {
     function requireLogin() {
         if (empty($_SESSION['user_id'])) {

@@ -12,6 +12,7 @@
                 <div class="col-md-6">
                     <h5>Gegevens</h5>
                     <form id="profile-form" method="post" enctype="multipart/form-data">
+                        <?= csrf_field() ?>
                         <input type="hidden" name="update_profile" value="1">
 
                         <div class="mb-3">
@@ -30,6 +31,7 @@
                 <div class="col-md-6">
                     <h5>Wachtwoord wijzigen</h5>
                     <form id="password-form" method="post">
+                        <?= csrf_field() ?>
                         <input type="hidden" name="change_password" value="1">
                         <div class="mb-3">
                             <label for="current_password" class="form-label">Huidig wachtwoord</label>
@@ -153,9 +155,9 @@
                                             </span>
                                         </td>
                                         <td class="text-center d-flex justify-content-center gap-1">
-                                            <a href="?page=admin_reset_client_password&id=<?= $portal['verslag_id'] ?>" class="btn btn-sm btn-outline-warning" title="Wachtwoord resetten" onclick="return confirm('Weet je zeker dat je het wachtwoord voor deze klant wilt resetten?')"><i class="bi bi-key-fill"></i></a>
-                                            <a href="?page=admin_extend_client&id=<?= $portal['verslag_id'] ?>" class="btn btn-sm btn-outline-success" title="Verleng met 14 dagen"><i class="bi bi-calendar-plus"></i></a>
-                                            <a href="?page=admin_revoke_client&id=<?= $portal['verslag_id'] ?>" class="btn btn-sm btn-outline-danger" title="Toegang intrekken" onclick="return confirm('Weet je zeker dat je de toegang voor deze klant wilt intrekken?')"><i class="bi bi-x-circle"></i></a>
+                                            <a href="<?= csrf_url('?page=admin_reset_client_password&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-warning" title="Wachtwoord resetten" onclick="return confirm('Weet je zeker dat je het wachtwoord voor deze klant wilt resetten?')"><i class="bi bi-key-fill"></i></a>
+                                            <a href="<?= csrf_url('?page=admin_extend_client&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-success" title="Verleng met 14 dagen"><i class="bi bi-calendar-plus"></i></a>
+                                            <a href="<?= csrf_url('?page=admin_revoke_client&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-danger" title="Toegang intrekken" onclick="return confirm('Weet je zeker dat je de toegang voor deze klant wilt intrekken?')"><i class="bi bi-x-circle"></i></a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

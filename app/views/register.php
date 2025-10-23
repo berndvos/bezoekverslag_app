@@ -18,6 +18,7 @@
       <?php endif; ?>
 
       <form method="post" action="?page=register" novalidate>
+        <?= csrf_field() ?>
         <div class="mb-3">
           <label class="form-label">Volledige naam</label>
           <input type="text" name="fullname" class="form-control" required placeholder="Uw volledige naam" value="<?= htmlspecialchars($_POST['fullname'] ?? '') ?>">

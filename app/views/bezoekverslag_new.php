@@ -5,6 +5,7 @@
     <p class="text-muted">Vul hieronder de basisinformatie in om een nieuw bezoekverslag aan te maken.</p>
 
     <form method="POST" action="?page=nieuw" class="card shadow-sm p-4 mt-3">
+        <?= csrf_field() ?>
         <div class="row g-3">
             <div class="col-md-12">
                 <label class="form-label">Naam bezoekverslag <span class="text-danger">*</span></label>

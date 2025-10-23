@@ -13,6 +13,7 @@
     <?php endif; ?>
 
     <form method="post" novalidate>
+        <?= csrf_field() ?>
       <div class="mb-3">
         <label class="form-label">Verificatiecode</label>
         <input type="text" name="2fa_code" class="form-control form-control-lg text-center" required autofocus

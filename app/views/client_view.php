@@ -41,6 +41,7 @@
     <div class="card-body">
       <?php if (!empty($_SESSION['client_can_edit'])): ?>
         <form method="post" action="?page=client_update&id=<?= (int)$verslag['id'] ?>">
+          <?= csrf_field() ?>
           <input type="hidden" name="action" value="save_wensen_installatie">
           <div class="mb-3">
             <label class="form-label">Wensen</label>
@@ -77,6 +78,7 @@
 
             <?php if (!empty($_SESSION['client_can_edit'])): ?>
               <form method="post" action="?page=client_update&id=<?= (int)$verslag['id'] ?>" enctype="multipart/form-data">
+                <?= csrf_field() ?>
                 <input type="hidden" name="action" value="save_ruimte">
                 <input type="hidden" name="ruimte_id" value="<?= (int)$r['id'] ?>">
 

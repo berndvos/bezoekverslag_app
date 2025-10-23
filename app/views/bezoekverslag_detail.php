@@ -12,6 +12,7 @@
     </div>
 
     <form method="POST" action="?page=update&id=<?= $verslag['id'] ?>" class="card p-4 shadow-sm mb-5">
+        <?= csrf_field() ?>
         <!-- Relatiegegevens -->
         <h4 class="text-primary"><i class="bi bi-building"></i> Relatiegegevens</h4>
         <div class="row g-3 mt-1 mb-4">

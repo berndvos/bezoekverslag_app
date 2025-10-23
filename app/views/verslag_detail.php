@@ -33,6 +33,7 @@
 
       <!-- RELATIE -->
       <form method="post" id="verslag-form" action="?page=bewerk&id=<?= (int)($verslag['id'] ?? 0) ?>">        
+        <?= csrf_field() ?>
         <input type="hidden" name="update" value="1">
         <div id="relatie" class="card mb-4 shadow-sm section-anchor" data-form-group="relatie">
           <div class="card-header bg-primary text-white"><i class="bi bi-building"></i> Relatiegegevens</div>
@@ -228,6 +229,7 @@
                           <li class="list-group-item d-flex justify-content-between align-items-center">
                               <?= htmlspecialchars($collaborator['fullname']) ?> (<?= htmlspecialchars($collaborator['email']) ?>)
                               <form method="post" class="collaboration-form d-inline">
+                                <?= csrf_field() ?>
                                   <input type="hidden" name="manage_collaboration" value="1">
                                   <input type="hidden" name="collaborator_id" value="<?= $collaborator['id'] ?>">
                                   <button type="submit" name="remove_collaborator" class="btn btn-sm btn-outline-danger" title="Verwijder toegang">
@@ -242,7 +244,8 @@
               <!-- Nieuwe collaborator toevoegen -->
               <hr>
               <h6 class="mt-4">Collega toevoegen</h6>
-              <form method="post" class="collaboration-form">
+      <form method="post" class="collaboration-form">
+        <?= csrf_field() ?>
                   <input type="hidden" name="manage_collaboration" value="1">
                   <div class="input-group">
                       <select name="collaborator_id" class="form-select" <?= empty($colleagues) ? 'disabled' : '' ?>>
@@ -264,6 +267,7 @@
       <?php if (isAdmin()): ?>
       <!-- Dit formulier blijft apart omdat het een andere actie heeft ('manage_client_access') -->
       <form method="post" id="klantportaal-form" action="?page=bewerk&id=<?= (int)($verslag['id'] ?? 0) ?>">
+        <?= csrf_field() ?>
         <div id="klantportaal" class="card mb-4 shadow-sm section-anchor">
           <div class="card-header bg-primary text-white"><i class="bi bi-person-badge"></i> Klantportaal Toegang</div>
           <div class="card-body">
@@ -310,7 +314,7 @@
                   </td>
                   <td>
                     <a href="?page=ruimte_edit&id=<?= (int)$r['id'] ?>" class="btn btn-sm btn-outline-primary">Bewerken</a>
-                    <a href="?page=ruimte_delete&id=<?= (int)$r['id'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Ruimte verwijderen?')">Verwijderen</a>
+                    <a href="<?= csrf_url('?page=ruimte_delete&id=' . (int)$r['id']) ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Ruimte verwijderen?')">Verwijderen</a>
                   </td>
                 </tr>
                 <?php endforeach; ?>
@@ -328,6 +332,7 @@
         <div class="card-body">
             <p class="text-muted small">Voeg hier projectbrede bestanden toe, zoals plattegronden, offertes van derden, etc.</p>
             <form id="project-files-form" method="post" enctype="multipart/form-data" action="?page=bewerk&id=<?= (int)($verslag['id'] ?? 0) ?>">
+              <?= csrf_field() ?>
                 <div class="input-group">
                     <input type="file" name="project_files[]" class="form-control" multiple>
                     <button class="btn btn-primary" type="submit" name="upload_project_files" value="1"><i class="bi bi-upload"></i> Uploaden</button>

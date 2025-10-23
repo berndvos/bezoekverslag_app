@@ -20,6 +20,7 @@ $customBrandingStyles = "
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
   <title>Bezoekverslag App</title>
   
   <!-- Bootstrap CSS -->
@@ -33,6 +34,12 @@ $customBrandingStyles = "
   <style>
     <?= $customBrandingStyles ?>
   </style>
+  <script>
+    window.getCsrfToken = function () {
+      const meta = document.querySelector('meta[name="csrf-token"]');
+      return meta ? meta.getAttribute('content') : '';
+    };
+  </script>
 </head>
 <body>
 
@@ -49,7 +56,7 @@ $customBrandingStyles = "
     border-bottom: 1px solid #dee2e6;">
     <i class="bi bi-person-fill-gear"></i>
     U bent ingelogd als <strong><?= htmlspecialchars($_SESSION['fullname']) ?></strong>.
-    <a href="?page=admin_stop_impersonate" class="alert-link ms-3">Terugkeren naar uw eigen account</a>.
+    <a href="<?= csrf_url('?page=admin_stop_impersonate') ?>" class="alert-link ms-3">Terugkeren naar uw eigen account</a>.
   </div>
 <?php endif; ?>
 

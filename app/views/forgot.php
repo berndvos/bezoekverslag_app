@@ -11,6 +11,7 @@
     <?php endif; ?>
 
     <form method="post">
+      <?= csrf_field() ?>
       <div class="mb-3">
         <label class="form-label">E-mailadres</label>
         <input type="email" name="email" class="form-control" required>

@@ -8,6 +8,66 @@ use PHPMailer\PHPMailer\Exception;
 
 class AuthController {
 
+    private const REMEMBER_COOKIE_NAME = 'remember_token';
+    private const REMEMBER_COOKIE_LIFETIME = 86400 * 30; // 30 dagen
+
+    private function isSecureRequest(): bool {
+        return !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+    }
+
+    private function generateTokenPair(): array {
+        $token = bin2hex(random_bytes(32));
+        return [$token, hash('sha256', $token)];
+    }
+
+    private function setRememberMeCookie(string $token): void {
+        $options = [
+            'expires' => time() + self::REMEMBER_COOKIE_LIFETIME,
+            'path' => '/',
+            'secure' => $this->isSecureRequest(),
+            'httponly' => true,
+            'samesite' => 'Strict',
+        ];
+
+        if (PHP_VERSION_ID >= 70300) {
+            setcookie(self::REMEMBER_COOKIE_NAME, $token, $options);
+        } else {
+            setcookie(
+                self::REMEMBER_COOKIE_NAME,
+                $token,
+                $options['expires'],
+                $options['path'] . '; SameSite=' . $options['samesite'],
+                '',
+                $options['secure'],
+                $options['httponly']
+            );
+        }
+    }
+
+    private function clearRememberMeCookie(): void {
+        $options = [
+            'expires' => time() - 3600,
+            'path' => '/',
+            'secure' => $this->isSecureRequest(),
+            'httponly' => true,
+            'samesite' => 'Strict',
+        ];
+
+        if (PHP_VERSION_ID >= 70300) {
+            setcookie(self::REMEMBER_COOKIE_NAME, '', $options);
+        } else {
+            setcookie(
+                self::REMEMBER_COOKIE_NAME,
+                '',
+                $options['expires'],
+                $options['path'] . '; SameSite=' . $options['samesite'],
+                '',
+                $options['secure'],
+                $options['httponly']
+            );
+        }
+    }
+
     /** LOGIN **/
     public function login() {
         // Als al ingelogd
@@ -18,11 +78,27 @@ class AuthController {
         }
 
         // Check remember-me cookie, maar niet als we een gebruiker overnemen
-        if (empty($_SESSION['user_id']) && !empty($_COOKIE['remember_token']) && empty($_SESSION['original_user'])) {
+        if (empty($_SESSION['user_id']) && !empty($_COOKIE[self::REMEMBER_COOKIE_NAME]) && empty($_SESSION['original_user'])) {
             $pdo = Database::getConnection();
-            $stmt = $pdo->prepare("SELECT * FROM users WHERE remember_token = ?");
-            $stmt->execute([$_COOKIE['remember_token']]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            $cookieToken = $_COOKIE[self::REMEMBER_COOKIE_NAME];
+            $user = null;
+            if (preg_match('/^[a-f0-9]{64}$/', $cookieToken)) {
+                $hashed = hash('sha256', $cookieToken);
+                $stmt = $pdo->prepare("SELECT * FROM users WHERE remember_token = ?");
+                $stmt->execute([$hashed]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                // Legacy ondersteuning: tokens die nog niet gehasht waren
+                if (!$user) {
+                    $stmtLegacy = $pdo->prepare("SELECT * FROM users WHERE remember_token = ?");
+                    $stmtLegacy->execute([$cookieToken]);
+                    $legacyUser = $stmtLegacy->fetch(PDO::FETCH_ASSOC);
+                    if ($legacyUser) {
+                        $pdo->prepare("UPDATE users SET remember_token = ? WHERE id = ?")->execute([$hashed, $legacyUser['id']]);
+                        $user = $legacyUser;
+                    }
+                }
+            }
             if ($user) {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['email'] = $user['email'];
@@ -31,9 +107,13 @@ class AuthController {
                 header("Location: ?page=dashboard");
                 exit;
             }
+
+            // Ongeldig token? Cookie opruimen om brute-force te voorkomen.
+            $this->clearRememberMeCookie();
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_valid_csrf_token($_POST['csrf_token'] ?? null);
             $pdo = Database::getConnection();
             $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
             $stmt->execute([$_POST['email']]);
@@ -59,9 +139,12 @@ class AuthController {
 
                 // Remember-me cookie instellen indien aangevinkt
                 if (!empty($_POST['remember'])) {
-                    $token = bin2hex(random_bytes(32));
-                    setcookie('remember_token', $token, time() + (86400 * 30), "/"); // 30 dagen
-                    $pdo->prepare("UPDATE users SET remember_token=? WHERE id=?")->execute([$token, $user['id']]);
+                    [$tokenPlain, $tokenHash] = $this->generateTokenPair();
+                    $this->setRememberMeCookie($tokenPlain);
+                    $pdo->prepare("UPDATE users SET remember_token=? WHERE id=?")->execute([$tokenHash, $user['id']]);
+                } else {
+                    $this->clearRememberMeCookie();
+                    $pdo->prepare("UPDATE users SET remember_token=NULL WHERE id=?")->execute([$user['id']]);
                 }
 
                 log_action('login_success', "Gebruiker '{$user['email']}' is ingelogd.");
@@ -78,10 +161,17 @@ class AuthController {
 
     /** LOGOUT **/
     public function logout() {
-        session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $pdo = Database::getConnection();
+        $userId = $_SESSION['user_id'] ?? null;
+        if ($userId) {
+            $pdo->prepare("UPDATE users SET remember_token = NULL WHERE id = ?")->execute([$userId]);
+        }
+        $this->clearRememberMeCookie();
         session_destroy();
         log_action('logout', "Gebruiker is uitgelogd.");
-        setcookie('remember_token', '', time() - 3600, "/");
         header("Location: ?page=login");
         exit;
     }
@@ -92,6 +182,7 @@ class AuthController {
         $success = '';
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_valid_csrf_token($_POST['csrf_token'] ?? null);
             $pdo = Database::getConnection();
             $fullname = trim($_POST['fullname'] ?? '');
             $email = trim($_POST['email'] ?? '');
@@ -133,17 +224,18 @@ class AuthController {
     /** WACHTWOORD VERGETEN **/
     public function forgot() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_valid_csrf_token($_POST['csrf_token'] ?? null);
             $pdo = Database::getConnection();
             $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
             $stmt->execute([$_POST['email']]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($user) {
-                $token = bin2hex(random_bytes(32));
+                [$plainToken, $hashedToken] = $this->generateTokenPair();
                 $pdo->prepare("UPDATE users SET reset_token=?, reset_expires=DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE id=?")
-                    ->execute([$token, $user['id']]);
+                    ->execute([$hashedToken, $user['id']]);
 
-                if ($this->sendPasswordResetEmail($user, $token)) {
+                if ($this->sendPasswordResetEmail($user, $plainToken)) {
                     $msg = "Er is een e-mail verstuurd met instructies voor het resetten van je wachtwoord.";
                 } else {
                     $error = "Er ging iets mis bij het versturen van de e-mail.";
@@ -162,10 +254,24 @@ class AuthController {
         $token = $_GET['token'] ?? '';
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_valid_csrf_token($_POST['csrf_token'] ?? null);
             $token = $_POST['token'] ?? '';
+            $hashedToken = preg_match('/^[a-f0-9]{64}$/', $token) ? hash('sha256', $token) : '';
             $stmt = $pdo->prepare("SELECT * FROM users WHERE reset_token=? AND reset_expires > NOW()");
-            $stmt->execute([$token]);
+            $stmt->execute([$hashedToken]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$user && $token !== '') {
+                $stmtLegacy = $pdo->prepare("SELECT * FROM users WHERE reset_token=? AND reset_expires > NOW()");
+                $stmtLegacy->execute([$token]);
+                $legacyUser = $stmtLegacy->fetch(PDO::FETCH_ASSOC);
+                if ($legacyUser) {
+                    if ($hashedToken !== '') {
+                        $pdo->prepare("UPDATE users SET reset_token=? WHERE id=?")->execute([$hashedToken, $legacyUser['id']]);
+                    }
+                    $user = $legacyUser;
+                }
+            }
 
             $password = $_POST['password'] ?? '';
             $passwordRepeat = $_POST['password_repeat'] ?? '';
@@ -201,6 +307,7 @@ class AuthController {
 
         $error = '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_valid_csrf_token($_POST['csrf_token'] ?? null);
             $code = $_POST['2fa_code'] ?? '';
             $userId = $_SESSION['pending_2fa_user_id'];
 
@@ -250,7 +357,7 @@ class AuthController {
         // We gebruiken de bestaande e-mailfunctionaliteit uit de AdminController
         // Dit is niet ideaal, een aparte MailService klasse zou beter zijn, maar dit werkt voor nu.
         $adminController = new AdminController();
-        $mailSettings = $adminController->getSmtpSettings(true);
+        $mailSettings = $adminController->getSmtpSettings();
         $emailTemplates = $adminController->getEmailTemplates();
         $template = $emailTemplates['2fa_code'] ?? [
             'subject' => 'Uw verificatiecode',

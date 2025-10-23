@@ -40,7 +40,7 @@
                     </button>
                     <!-- Verwijderen knop -->
                     <?php if (($u['id'] ?? 0) !== ($_SESSION['user_id'] ?? -1)): ?>
-                      <a href="?page=admin_delete_user&id=<?= (int)$u['id'] ?>" class="btn btn-sm btn-outline-danger"
+                      <a href="<?= csrf_url('?page=admin_delete_user&id=' . (int)$u['id']) ?>" class="btn btn-sm btn-outline-danger"
                          onclick="return confirm('Weet je zeker dat je deze gebruiker wilt verwijderen?')">
                         <i class="bi bi-trash"></i>
                       </a>
@@ -53,6 +53,7 @@
                   <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                       <form method="post">
+                        <?= csrf_field() ?>
                         <div class="modal-header bg-primary text-white">
                           <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Gebruiker bewerken</h5>
                           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -107,6 +108,7 @@
     <div class="card-header bg-success text-white"><i class="bi bi-person-plus"></i> Nieuwe gebruiker aanmaken</div>
     <div class="card-body">
       <form method="post">
+        <?= csrf_field() ?>
         <div class="row g-3">
           <div class="col-md-6">
             <label class="form-label">Volledige naam</label>
@@ -115,14 +117,6 @@
           <div class="col-md-6">
             <label class="form-label">E-mailadres</label>
             <input type="email" name="email" class="form-control" placeholder="naam@bedrijf.nl" required>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Wachtwoord</label>
-            <input type="password" name="password" class="form-control" placeholder="Minimaal 8 tekens" minlength="8" required>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Herhaal wachtwoord</label>
-            <input type="password" name="password_repeat" class="form-control" placeholder="Herhaal wachtwoord" required>
           </div>
           <div class="col-md-6">
             <label class="form-label">Rol</label>
@@ -134,6 +128,7 @@
             </select>
           </div>
         </div>
+        <p class="text-muted small mt-3 mb-0">Nieuwe gebruikers ontvangen automatisch een e-mail om een eigen wachtwoord in te stellen.</p>
         <div class="text-end mt-4">
           <button type="submit" name="create_user" class="btn btn-success">
             <i class="bi bi-person-plus"></i> Gebruiker toevoegen

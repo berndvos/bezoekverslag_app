@@ -60,6 +60,7 @@ class RuimteController {
             exit;
         }
 
+        require_valid_csrf_token($_POST['csrf_token'] ?? null);
         $verslag_id = (int)($_GET['verslag_id'] ?? 0);
         if (!$verslag_id) die("Geen verslag ID opgegeven.");
 
@@ -98,6 +99,7 @@ class RuimteController {
         $pdo = Database::getConnection();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_valid_csrf_token($_POST['csrf_token'] ?? null);
             // Haal verslag_id op voor de redirect
             $stmt_verslag = $pdo->prepare("SELECT verslag_id FROM ruimte WHERE id = ?");
             $stmt_verslag->execute([$id]);
@@ -143,6 +145,7 @@ class RuimteController {
     /** Ruimte verwijderen */
     public function delete($id) {
         requireRole(['accountmanager', 'admin', 'poweruser']);
+        require_valid_csrf_token($_GET['csrf_token'] ?? null);
         $pdo = Database::getConnection();
 
         $stmt = $pdo->prepare("SELECT verslag_id FROM ruimte WHERE id=?");
@@ -164,6 +167,11 @@ class RuimteController {
     /** Foto verwijderen */
     public function deleteFoto($foto_id) {
         requireRole(['accountmanager', 'admin', 'poweruser']);
+        $token = $_POST['csrf_token'] ?? $_GET['csrf_token'] ?? null;
+        if (!verify_csrf_token($token)) {
+            echo json_encode(['success' => false, 'message' => 'Ongeldig verzoek.']);
+            exit;
+        }
         header('Content-Type: application/json');
 
         $pdo = Database::getConnection();

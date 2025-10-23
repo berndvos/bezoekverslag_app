@@ -21,9 +21,8 @@ class AdminController {
 
         // Nieuwe gebruiker toevoegen
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_user'])) {
+            require_valid_csrf_token($_POST['csrf_token'] ?? null);
             if ($this->createUser($pdo)) {
-                $_SESSION['flash_message'] = ['type' => 'success', 'text' => 'Gebruiker succesvol aangemaakt.'];
-                $this->sendNewUserEmail($_POST['email'], $_POST['password'], $this->getSmtpSettings(true));
                 log_action('user_created', "Gebruiker '{$_POST['email']}' aangemaakt.");
             }
             header("Location: ?page=admin");
@@ -32,6 +31,7 @@ class AdminController {
 
         // Gebruiker bewerken
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
+            require_valid_csrf_token($_POST['csrf_token'] ?? null);
             if ($this->updateUser($pdo)) {
                 $_SESSION['flash_message'] = ['type' => 'success', 'text' => 'Gebruiker succesvol bijgewerkt.'];
                 log_action('user_updated', "Gebruiker '{$_POST['email']}' bijgewerkt.");
@@ -42,6 +42,7 @@ class AdminController {
 
         // Logo uploaden
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_logo'])) {
+            require_valid_csrf_token($_POST['csrf_token'] ?? null);
             if ($this->handleLogoUpload()) {
                 $_SESSION['flash_message'] = ['type' => 'success', 'text' => 'Logo succesvol geüpload.'];
             }
@@ -53,6 +54,7 @@ class AdminController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_branding'])) {
             // AJAX afhandeling
             header('Content-Type: application/json');
+            require_valid_csrf_token($_POST['csrf_token'] ?? null);
             if ($this->saveBrandingSettings()) {
                 echo json_encode(['success' => true, 'message' => 'Huisstijl-instellingen succesvol opgeslagen.']);
             } else {
@@ -66,6 +68,7 @@ class AdminController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_email_templates'])) {
             // AJAX afhandeling
             header('Content-Type: application/json');
+            require_valid_csrf_token($_POST['csrf_token'] ?? null);
             if ($this->saveEmailTemplates()) {
                 echo json_encode(['success' => true, 'message' => 'E-mail sjablonen succesvol opgeslagen.']);
             } else {
@@ -77,6 +80,7 @@ class AdminController {
 
         // Gebruikersregistratie goedkeuren/afwijzen
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['manage_registration'])) {
+            require_valid_csrf_token($_POST['csrf_token'] ?? null);
             $this->manageRegistration($pdo);
             header("Location: ?page=admin#registraties");
             exit;
@@ -133,21 +137,10 @@ class AdminController {
     private function createUser($pdo) {
         $fullname = trim($_POST['fullname'] ?? '');
         $email = trim($_POST['email'] ?? '');
-        $password = $_POST['password'] ?? '';
-        $passwordRepeat = $_POST['password_repeat'] ?? '';
         $role = $_POST['role'] ?? '';
 
-        if (!$fullname || !filter_var($email, FILTER_VALIDATE_EMAIL) || !$password || !$role) {
+        if (!$fullname || !filter_var($email, FILTER_VALIDATE_EMAIL) || !$role) {
             $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Vul alle velden correct in.'];
-            return false;
-        }
-        if ($password !== $passwordRepeat) {
-            $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'De ingevoerde wachtwoorden komen niet overeen.'];
-            return false;
-        }
-
-        if (strlen($password) < 8) {
-            $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Wachtwoord moet minimaal 8 tekens bevatten.'];
             return false;
         }
 
@@ -159,10 +152,47 @@ class AdminController {
             return false;
         }
 
-        $password_hash = password_hash($password, PASSWORD_DEFAULT);
+        $temporaryPassword = bin2hex(random_bytes(16));
+        $passwordHash = password_hash($temporaryPassword, PASSWORD_DEFAULT);
 
-        $stmt = $pdo->prepare("INSERT INTO users (fullname, email, password, role, created_at) VALUES (?, ?, ?, ?, NOW())");
-        return $stmt->execute([$fullname, $email, $password_hash, $role]);
+        $stmt = $pdo->prepare("INSERT INTO users (fullname, email, password, role, status, created_at) VALUES (?, ?, ?, ?, 'active', NOW())");
+        if (!$stmt->execute([$fullname, $email, $passwordHash, $role])) {
+            return false;
+        }
+
+        $newUserId = (int)$pdo->lastInsertId();
+        $stmtUser = $pdo->prepare("SELECT id, email, fullname FROM users WHERE id = ?");
+        $stmtUser->execute([$newUserId]);
+        $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
+        if ($user) {
+            if ($this->sendPasswordSetupLink($pdo, $user)) {
+                $_SESSION['flash_message'] = ['type' => 'success', 'text' => 'Gebruiker aangemaakt. Er is een e-mail verstuurd met instructies om een wachtwoord in te stellen.'];
+            } else {
+                $_SESSION['flash_message'] = ['type' => 'warning', 'text' => 'Gebruiker aangemaakt, maar het versturen van de wachtwoord e-mail is mislukt. Laat de gebruiker handmatig een reset aanvragen.'];
+            }
+        } else {
+            $_SESSION['flash_message'] = ['type' => 'warning', 'text' => 'Gebruiker aangemaakt, maar kon de gebruikersgegevens niet ophalen voor het versturen van een resetlink.'];
+        }
+        return true;
+    }
+
+    /**
+     * Genereert een reset-token en verstuurt een e-mail zodat de gebruiker een wachtwoord kan instellen.
+     */
+    private function sendPasswordSetupLink(PDO $pdo, array $user): bool {
+        if (empty($user['id']) || empty($user['email'])) {
+            return false;
+        }
+
+        $plainToken = bin2hex(random_bytes(32));
+        $hashedToken = hash('sha256', $plainToken);
+
+        $stmt = $pdo->prepare("UPDATE users SET reset_token = ?, reset_expires = DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE id = ?");
+        if (!$stmt->execute([$hashedToken, $user['id']])) {
+            return false;
+        }
+
+        return (new AuthController())->sendPasswordResetEmail($user, $plainToken);
     }
 
     /** Registratie goedkeuren of afwijzen */
@@ -243,6 +273,7 @@ class AdminController {
     /** Gebruiker verwijderen */
     public function deleteUser($id) {
         requireRole(['admin', 'poweruser']);
+        require_valid_csrf_token($_GET['csrf_token'] ?? null);
         $pdo = Database::getConnection();
 
         if (!$id || $id === $_SESSION['user_id']) {
@@ -268,6 +299,7 @@ class AdminController {
      */
     public function impersonateUser($id) {
         requireRole(['admin', 'poweruser']);
+        require_valid_csrf_token($_GET['csrf_token'] ?? null);
         $pdo = Database::getConnection();
 
         // Voorkom dat je jezelf overneemt of een niet-bestaande gebruiker
@@ -311,6 +343,7 @@ class AdminController {
     /** Klantportaal toegang intrekken */
     public function revokeClientAccess($verslag_id) {
         requireRole(['admin', 'poweruser', 'accountmanager']);
+        require_valid_csrf_token($_GET['csrf_token'] ?? null);
         $pdo = Database::getConnection();
 
         // Ownership check for accountmanager
@@ -333,6 +366,7 @@ class AdminController {
     /** Klantportaal toegang verlengen */
     public function extendClientAccess($verslag_id) {
         requireRole(['admin', 'poweruser', 'accountmanager']);
+        require_valid_csrf_token($_GET['csrf_token'] ?? null);
         $pdo = Database::getConnection();
 
         // Ownership check for accountmanager
@@ -349,7 +383,7 @@ class AdminController {
         log_action('client_access_extended', "Toegang voor verslag #{$verslag_id} verlengd.");
 
         // Stuur een e-mail naar de klant
-        $this->sendClientExtendedEmail($pdo, $verslag_id, date('Y-m-d H:i:s', strtotime('+14 days')), $this->getSmtpSettings(true));
+        $this->sendClientExtendedEmail($pdo, $verslag_id, date('Y-m-d H:i:s', strtotime('+14 days')), $this->getSmtpSettings());
 
         $_SESSION['flash_message'] = ['type' => 'success', 'text' => 'Klanttoegang is met 14 dagen verlengd.'];
         header("Location: " . ($_SERVER['HTTP_REFERER'] ?? '?page=dashboard'));
@@ -360,6 +394,7 @@ class AdminController {
     public function resetClientPassword($verslag_id) {
         // De logica wordt al afgehandeld door de BezoekverslagController, we roepen die hier aan.
         // Dit voorkomt dubbele code. De rechten worden daar al gecheckt.
+        require_valid_csrf_token($_GET['csrf_token'] ?? null);
         (new BezoekverslagController())->resetClientPassword($verslag_id, true);
         exit;
     }
@@ -456,6 +491,7 @@ class AdminController {
 
     public function restoreVerslag($id) {
         requireRole(['admin', 'poweruser']);
+        require_valid_csrf_token($_GET['csrf_token'] ?? null);
         $pdo = Database::getConnection();
         $stmt = $pdo->prepare("UPDATE bezoekverslag SET deleted_at = NULL WHERE id = ?");
         $stmt->execute([$id]);
@@ -467,6 +503,7 @@ class AdminController {
 
     public function permanentDeleteVerslag($id) {
         requireRole(['admin', 'poweruser']);
+        require_valid_csrf_token($_GET['csrf_token'] ?? null);
         $pdo = Database::getConnection();
 
         // Haal alle ruimtes op die bij dit verslag horen voor het verwijderen van bestanden
@@ -500,6 +537,7 @@ class AdminController {
 
     public function emptyTrash() {
         requireRole(['admin', 'poweruser']);
+        require_valid_csrf_token($_GET['csrf_token'] ?? null);
         $pdo = Database::getConnection();
     
         // Haal eerst de IDs op van de te verwijderen verslagen om de bestanden op te ruimen
@@ -563,6 +601,8 @@ class AdminController {
 
     public function backupDatabase() {
         requireRole(['admin', 'poweruser']);
+        $token = $_POST['csrf_token'] ?? $_GET['csrf_token'] ?? null;
+        require_valid_csrf_token($token);
         $pdo = Database::getConnection();
         $backup = "-- Bezoekverslag App SQL Backup\n-- Generation Time: " . date('Y-m-d H:i:s') . "\n\n";
 
@@ -654,27 +694,6 @@ class AdminController {
         }
         $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Fout bij het uploaden van het logo.'];
         return false;
-    }
-
-    private function sendNewUserEmail($userEmail, $plainPassword, $mailSettings) {
-        $pdo = Database::getConnection();
-        $stmt = $pdo->prepare("SELECT fullname FROM users WHERE email = ?");
-        $stmt->execute([$userEmail]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$user) return;
-        $emailTemplate = $this->getEmailTemplates()['new_user_created'];
-        if (empty($emailTemplate)) return; // Voorkom fout als template niet bestaat
-
-        $loginLink = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]" . dirname($_SERVER['PHP_SELF']) . '/?page=login';
-
-        $placeholders = ['{user_fullname}', '{user_email}', '{user_password}', '{login_link}'];
-        $values = [$user['fullname'], $userEmail, $plainPassword, $loginLink];
-
-        $subject = str_replace($placeholders, $values, $emailTemplate['subject']);
-        $body = str_replace($placeholders, $values, $emailTemplate['body']);
-
-        $this->sendEmail($userEmail, $user['fullname'], $subject, $body, $mailSettings);
     }
 
     private function sendClientExtendedEmail($pdo, $verslag_id, $newExpiryDate, $mailSettings) {
@@ -787,6 +806,7 @@ class AdminController {
      */
     public function testSmtp() {
         requireRole(['admin', 'poweruser']);
+        require_valid_csrf_token($_GET['csrf_token'] ?? null);
         $mailSettings = $this->getSmtpSettings();
         $userEmail = $_SESSION['email'] ?? null;
         $userName = $_SESSION['fullname'] ?? 'Test Gebruiker';
@@ -915,6 +935,7 @@ class AdminController {
     public function stopImpersonation() {
         // Zorg ervoor dat er een actieve sessie is voordat we proberen te herstellen
         requireLogin();
+        require_valid_csrf_token($_GET['csrf_token'] ?? null);
         if (isset($_SESSION['original_user'])) {
             $originalUser = $_SESSION['original_user'];
             $impersonatedEmail = $_SESSION['email']; // Voor de log
@@ -944,6 +965,7 @@ class AdminController {
      */
     public function adminResetPassword($id) {
         requireRole(['admin', 'poweruser']);
+        require_valid_csrf_token($_GET['csrf_token'] ?? null);
         $pdo = Database::getConnection();
 
         $stmt = $pdo->prepare("SELECT id, email, fullname FROM users WHERE id = ?");
@@ -951,14 +973,11 @@ class AdminController {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user) {
-            $token = bin2hex(random_bytes(32));
-            $pdo->prepare("UPDATE users SET reset_token=?, reset_expires=DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE id=?")
-                ->execute([$token, $user['id']]);
-
-            // Gebruik de AuthController om de e-mail te versturen
-            (new AuthController())->sendPasswordResetEmail($user, $token);
-            
-            $_SESSION['flash_message'] = ['type' => 'success', 'text' => "Wachtwoord reset e-mail verstuurd naar {$user['email']}."];
+            if ($this->sendPasswordSetupLink($pdo, $user)) {
+                $_SESSION['flash_message'] = ['type' => 'success', 'text' => "Een wachtwoord-reset e-mail is verstuurd naar {$user['email']}."];
+            } else {
+                $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Het versturen van de reset e-mail is mislukt.'];
+            }
         } else {
             $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Gebruiker niet gevonden.'];
         }
