@@ -455,8 +455,20 @@ class BezoekverslagController {
 
         // Sla de PDF op
         $newVersion = (int)($verslag['pdf_version'] ?? 0) + 1;
-        $safeKlantnaam = preg_replace('/[^a-zA-Z0-9_-]/', '_', $verslag['klantnaam']);
-        $pdfFilename = sprintf('Bezoekverslag_%s_v%d.pdf', $safeKlantnaam, $newVersion);
+        // Maak veilige en nette bestandsnamen met spaties en koppeltekens
+        $sanitize = function ($value) {
+            $value = (string)($value ?? '');
+            // Verwijder ongeldige tekens, behoud letters/cijfers/spaties/_/-
+            $value = preg_replace('/[^\pL\pN _-]+/u', ' ', $value);
+            // Vervang meerdere spaties door enkele spatie
+            $value = preg_replace('/\s+/', ' ', $value);
+            // Trim ongewenste tekens aan randen
+            $value = trim($value, " .-_");
+            return $value !== '' ? $value : 'naamloos';
+        };
+        $safeKlantnaam = $sanitize($verslag['klantnaam'] ?? '');
+        $safeProjecttitel = $sanitize($verslag['projecttitel'] ?? '');
+        $pdfFilename = sprintf('Bezoekverslag - %s - %s.pdf', $safeKlantnaam, $safeProjecttitel);
         file_put_contents($pdfDir . $pdfFilename, $dompdf->output());
 
         // Update de database

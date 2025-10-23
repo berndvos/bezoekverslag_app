@@ -622,13 +622,32 @@ document.addEventListener('DOMContentLoaded', function() {
         const huisnummerEl = document.querySelector(`input[name="${prefix === 'relatie' ? 'huisnummer' : 'installatie_adres_huisnummer'}"]`);
         const toevoegingEl = document.querySelector(`input[name="${prefix === 'relatie' ? 'huisnummer_toevoeging' : 'installatie_adres_huisnummer_toevoeging'}"]`);
 
+        // Zorg dat een reeds ingevulde postcode meteen in hoofdletters staat
+        if (el.value) {
+            el.value = el.value.toUpperCase();
+        }
+
         let debounceTimer;
         const triggerLookup = () => {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => handlePostcodeLookup(prefix), 500); // Wacht 500ms na de laatste input
         };
 
-        el.addEventListener('input', triggerLookup);
+        // Uppercase live tijdens het typen en start lookup met debounce
+        el.addEventListener('input', () => {
+            const start = el.selectionStart;
+            const end = el.selectionEnd;
+            const upper = (el.value || '').toUpperCase();
+            if (el.value !== upper) {
+                el.value = upper;
+                try { if (start != null && end != null) el.setSelectionRange(start, end); } catch (e) {}
+            }
+            triggerLookup();
+        });
+
+        // Nogmaals normaliseren bij verlaten van het veld
+        el.addEventListener('blur', () => { el.value = (el.value || '').toUpperCase(); });
+
         if (huisnummerEl) {
             huisnummerEl.addEventListener('input', triggerLookup);
         }
