@@ -691,14 +691,25 @@ document.addEventListener('DOMContentLoaded', function() {
             updateResultDiv.style.display = 'block';
             updateResultDiv.innerHTML = '<p class="text-info"><i class="bi bi-info-circle"></i> Bezig met controleren op updates...</p>';
 
-            fetch('?page=admin_check_updates', {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
+      fetch('?page=admin_check_updates', {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => {
+        // If the server didn't return JSON (or returned an empty body),
+        // avoid calling response.json() directly to prevent "Unexpected end of JSON input".
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          return response.text().then(text => {
+            // Surface the raw server response as an error so the catch block can show it.
+            throw new Error(text || ('HTTP ' + response.status));
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
                 if (data.error) {
                     updateResultDiv.innerHTML = `<div class="alert alert-danger" role="alert"><strong>Fout:</strong> ${data.error}</div>`;
                     return;

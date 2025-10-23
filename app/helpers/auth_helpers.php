@@ -29,11 +29,18 @@ if (!function_exists('requireRole')) {
      */
     function requireRole(array $allowedRoles) {
         if (empty($_SESSION['role']) || !in_array($_SESSION['role'], $allowedRoles, true)) {
-            echo "<div style='padding:2rem; font-family:system-ui,sans-serif'>
-                    <h3>Toegang geweigerd</h3>
-                    <p>Je hebt geen rechten om deze pagina te bekijken.</p>
-                    <a href='?page=dashboard'>Terug naar dashboard</a>
-                  </div>";
+            // Als het een AJAX-request is, stuur een JSON-error. Anders, toon HTML.
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                header('Content-Type: application/json');
+                http_response_code(403); // Forbidden
+                echo json_encode(['error' => 'Toegang geweigerd. Je hebt onvoldoende rechten.']);
+            } else {
+                echo "<div style='padding:2rem; font-family:system-ui,sans-serif'>
+                        <h3>Toegang geweigerd</h3>
+                        <p>Je hebt geen rechten om deze pagina te bekijken.</p>
+                        <a href='?page=dashboard'>Terug naar dashboard</a>
+                      </div>";
+            }
             exit;
         }
     }

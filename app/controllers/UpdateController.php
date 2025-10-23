@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../helpers/auth_helpers.php';
-require_once __DIR__ . '/AdminController.php';
+// require_once __DIR__ . '/AdminController.php'; // Removed, as it's not best practice and already loaded by index.php
 
 class UpdateController {
 
@@ -16,30 +16,48 @@ class UpdateController {
         header('Content-Type: application/json');
         requireRole(['admin', 'poweruser']);
 
-        if (empty(self::GITHUB_REPO)) {
-            echo json_encode(['error' => 'GitHub repository is niet geconfigureerd in UpdateController.php']);
+        try {
+            // Controleer of de cURL-extensie is geladen
+            if (!extension_loaded('curl')) {
+                http_response_code(500);
+                echo json_encode(['error' => 'De cURL PHP-extensie is niet geladen. Deze is vereist om op updates te controleren. Activeer de extensie in uw php.ini bestand.']);
+                exit;
+            }
+
+            if (empty(self::GITHUB_REPO)) {
+                http_response_code(500);
+                echo json_encode(['error' => 'GitHub repository is niet geconfigureerd in UpdateController.php']);
+                exit;
+            }
+
+            // Gebruik require om de waarde uit version.php te laden (bestand returnt de versie string)
+            $currentVersion = trim(require __DIR__ . '/../../config/version.php');
+
+            $latestVersionData = $this->getLatestVersionFromGitHub();
+
+            if (isset($latestVersionData['error'])) {
+                // Geef een fout terug met HTTP 200 zodat de frontend de boodschap kan tonen,
+                // maar als je liever HTTP 500 wilt, kun je dat hier aanpassen.
+                echo json_encode($latestVersionData);
+                exit;
+            }
+
+            $latestVersion = $latestVersionData['version'];
+
+            $response = [
+                'current_version' => $currentVersion,
+                'latest_version' => $latestVersion,
+                'update_available' => version_compare($latestVersion, $currentVersion, ' > '),
+                'release_info' => $latestVersionData
+            ];
+
+            echo json_encode($response);
+            exit;
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Fout bij het controleren op updates: ' . $e->getMessage()]);
             exit;
         }
-
-        $currentVersion = trim(file_get_contents(__DIR__ . '/../../config/version.php'));
-        $latestVersionData = $this->getLatestVersionFromGitHub();
-
-        if (isset($latestVersionData['error'])) {
-            echo json_encode($latestVersionData);
-            exit;
-        }
-
-        $latestVersion = $latestVersionData['version'];
-
-        $response = [
-            'current_version' => $currentVersion,
-            'latest_version' => $latestVersion,
-            'update_available' => version_compare($latestVersion, $currentVersion, ' > '),
-            'release_info' => $latestVersionData
-        ];
-
-        echo json_encode($response);
-        exit;
     }
 
     /**
@@ -52,7 +70,10 @@ class UpdateController {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Belangrijk voor veiligheid
+        // SSL verificatie is belangrijk voor de veiligheid.
+        // Als dit faalt op de live server, moet de server correct geconfigureerd worden met een up-to-date CA certificate bundle.
+        // Zie: https://curl.se/docs/sslcerts.html
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'User-Agent: Bezoekverslag-App-Updater',
@@ -65,19 +86,24 @@ class UpdateController {
         if (curl_errno($ch)) {
             $error_msg = curl_error($ch);
             curl_close($ch);
+            // Geef een duidelijke foutmelding terug als het een SSL-certificaat probleem is.
+            if (strpos($error_msg, 'SSL certificate') !== false) {
+                return ['error' => "SSL Certificaat Fout: Kan de GitHub API niet veilig bereiken. De server's CA bundle is mogelijk verouderd. Contacteer de serverbeheerder. Details: " . $error_msg];
+            }
             return ['error' => "cURL Fout bij het verbinden met GitHub API: " . $error_msg];
         }
+        
         if ($httpCode !== 200) {
+            curl_close($ch);
             return ['error' => "GitHub API gaf een onverwachte statuscode: {$httpCode}. Controleer of de repository publiek is en de naam correct is."];
         }
 
+        curl_close($ch);
         $data = json_decode($response, true);
 
         if (json_last_error() !== JSON_ERROR_NONE || !isset($data['tag_name'])) {
             return ['error' => 'Ongeldig antwoord van de GitHub API.', 'details' => $data];
         }
-
-        curl_close($ch);
 
         return [
             'version' => preg_replace('/^v/i', '', $data['tag_name']),
@@ -205,6 +231,7 @@ class UpdateController {
         curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['User-Agent: Bezoekverslag-App-Updater']);
         curl_setopt($ch, CURLOPT_FAILONERROR, true);
+        // SSL verificatie is belangrijk voor de veiligheid.
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 
