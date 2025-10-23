@@ -14,6 +14,7 @@ $writablePaths = [
     'c:\\xampp\\htdocs\\bezoekverslag_app' // For .env file
 ];
 $configDir = 'c:\\xampp\\htdocs\\bezoekverslag_app\\config';
+define('INSTALLER_ENV_PATH', __DIR__ . '/.env');
 
 
 // --- STATE & STEP MANAGEMENT ---
@@ -22,7 +23,7 @@ $error_message = '';
 $success_message = '';
 
 // Prevent re-installation
-if (file_exists(__DIR__ . '/.env')) {
+if (file_exists(INSTALLER_ENV_PATH)) {
     $step = 'already_installed';
 }
 
@@ -63,7 +64,7 @@ SMTP_FROM_ADDRESS=
 SMTP_FROM_NAME=
 EOT;
 
-        if (file_put_contents(__DIR__ . '/.env', $env_content) === false) {
+        if (file_put_contents(INSTALLER_ENV_PATH, $env_content) === false) {
             $error_message = "Kon het .env bestand niet aanmaken. Controleer de schrijfrechten van de root directory.";
         } else {
             // --- 3. TEST DATABASE CONNECTION ---
@@ -92,8 +93,8 @@ EOT;
             } catch (PDOException $e) {
                 $error_message = "Databasefout: " . $e->getMessage() . ". Controleer de databasegegevens en probeer het opnieuw. Het kan zijn dat de database nog niet bestaat.";
                 // Clean up failed install
-                if (file_exists(__DIR__ . '/.env')) {
-                    unlink(__DIR__ . '/.env');
+                if (file_exists(INSTALLER_ENV_PATH)) {
+                    unlink(INSTALLER_ENV_PATH);
                 }
             } catch (Exception $e) {
                 $error_message = "Er is een onbekende fout opgetreden: " . $e->getMessage();

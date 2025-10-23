@@ -9,12 +9,14 @@ class UpdateController {
     private const GITHUB_REPO = 'berndvos/bezoekverslag_app'; // Voorbeeld: 'gebruikersnaam/repository-naam'
     private const GITHUB_API_URL = 'https://api.github.com/repos/';
     private const ENABLE_SELF_UPDATE = false;
+    private const ROOT_PATH = __DIR__ . '/../../';
+    private const HEADER_JSON = 'Content-Type: application/json';
 
     /**
      * AJAX endpoint om te controleren op updates.
      */
     public function check() {
-        header('Content-Type: application/json');
+        header(self::HEADER_JSON);
         requireRole(['admin', 'poweruser']);
         $token = $_POST['csrf_token'] ?? $_GET['csrf_token'] ?? null;
         require_valid_csrf_token($token);
@@ -34,7 +36,7 @@ class UpdateController {
             }
 
             // Gebruik require om de waarde uit version.php te laden (bestand returnt de versie string)
-            $currentVersionRaw = trim(require __DIR__ . '/../../config/version.php');
+            $currentVersionRaw = trim(require self::ROOT_PATH . 'config/version.php');
             $currentVersion = $this->normalizeVersion($currentVersionRaw);
 
             $latestVersionData = $this->getLatestVersionFromGitHub();
@@ -124,7 +126,7 @@ class UpdateController {
      * AJAX endpoint om de update uit te voeren.
      */
     public function performUpdate() {
-        header('Content-Type: application/json');
+        header(self::HEADER_JSON);
         requireRole(['admin', 'poweruser']);
         $token = $_POST['csrf_token'] ?? $_GET['csrf_token'] ?? null;
         require_valid_csrf_token($token);
@@ -135,9 +137,9 @@ class UpdateController {
         }
         set_time_limit(300); // Verhoog de executietijd voor het downloaden en uitpakken
 
-        $backupDir = __DIR__ . '/../../storage/backups/update_' . date('Y-m-d_H-i-s');
-        $tempDir = __DIR__ . '/../../storage/temp_update';
-        $rootDir = __DIR__ . '/../../';
+        $backupDir = self::ROOT_PATH . 'storage/backups/update_' . date('Y-m-d_H-i-s');
+        $tempDir = self::ROOT_PATH . 'storage/temp_update';
+        $rootDir = self::ROOT_PATH;
 
         try {
             // 1. Maak back-up
@@ -153,7 +155,9 @@ class UpdateController {
             $zipUrl = $latestVersionData['zip_url'];
             $zipFile = $tempDir . '/update.zip';
 
-            if (!is_dir($tempDir)) mkdir($tempDir, 0777, true);
+            if (!is_dir($tempDir)) {
+                mkdir($tempDir, 0777, true);
+            }
             if (!$this->downloadFile($zipUrl, $zipFile)) {
                 throw new Exception("Downloaden van de update mislukt.");
             }
@@ -211,16 +215,17 @@ class UpdateController {
         }
 
         $files = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator(__DIR__ . '/../../', RecursiveDirectoryIterator::SKIP_DOTS),
+            new RecursiveDirectoryIterator(self::ROOT_PATH, RecursiveDirectoryIterator::SKIP_DOTS),
             RecursiveIteratorIterator::LEAVES_ONLY
         );
 
+        $baseLength = strlen(rtrim(self::ROOT_PATH, "/\\")) + 1;
         foreach ($files as $name => $file) {
             if (!$file->isDir()) {
                 $filePath = $file->getRealPath();
                 // Excludeer de backup- en temp mappen zelf
                 if (strpos($filePath, 'storage/backups') === false && strpos($filePath, 'storage/temp_update') === false) {
-                    $relativePath = substr($filePath, strlen(__DIR__ . '/../../') + 1);
+                    $relativePath = substr($filePath, $baseLength);
                     $zip->addFile($filePath, $relativePath);
                 }
             }
@@ -250,7 +255,7 @@ class UpdateController {
 
         $success = curl_exec($ch);
 
-        if(curl_errno($ch)){
+        if (curl_errno($ch)) {
             // Optioneel: log de curl error voor debugging
             // error_log('cURL download error: ' . curl_error($ch));
         }
@@ -281,13 +286,17 @@ class UpdateController {
         $dir = opendir($source);
         @mkdir($destination);
         while (($file = readdir($dir)) !== false) {
-            if ($file === '.' || $file === '..') continue;
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
 
             $sourcePath = $source . '/' . $file;
             $destPath = $destination . '/' . $file;
             $relativePath = str_replace($source . '/', '', $sourcePath);
 
-            if (in_array($relativePath, $exclude)) continue;
+            if (in_array($relativePath, $exclude)) {
+                continue;
+            }
 
             if (is_dir($sourcePath)) {
                 $this->copyFiles($sourcePath, $destPath);
@@ -302,7 +311,9 @@ class UpdateController {
      * Ruimt tijdelijke update-mappen op.
      */
     private function cleanup($dir) {
-        if (!is_dir($dir)) return;
+        if (!is_dir($dir)) {
+            return;
+        }
         $files = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
             RecursiveIteratorIterator::CHILD_FIRST
@@ -322,3 +333,7 @@ class UpdateController {
         return preg_replace('/^v/i', '', $version);
     }
 }
+
+
+
+

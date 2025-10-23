@@ -18,6 +18,7 @@ class AdminController {
     private const HEADER_JSON = 'Content-Type: application/json';
     private const BRANDING_CONFIG_RELATIVE_PATH = '/../../config/branding.php';
     private const PUBLIC_UPLOADS_PATH = '/../../public/uploads';
+    private const REDIRECT_LOGIN = 'Location: ?page=login';
 
     /** Gebruikersoverzicht */
     public function users() {
@@ -869,101 +870,123 @@ class AdminController {
         requireLogin();
         $pdo = Database::getConnection();
 
-        // Gegevens bijwerken
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_profile']) || isset($_POST['change_password']))) {
-            header(self::HEADER_JSON);
-            $response = ['success' => false, 'message' => 'Onbekende fout.'];
-
-            if (isset($_POST['update_profile'])) {
-                $dataUpdated = false;
-                
-                // Handel de profielgegevens af
-                $fullname = trim($_POST['fullname'] ?? '');
-                $email = trim($_POST['email'] ?? '');
-
-                if ($fullname && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    $stmt = $pdo->prepare("UPDATE users SET fullname = ?, email = ? WHERE id = ?");
-                    $stmt->execute([$fullname, $email, $_SESSION['user_id']]);
-                    $dataUpdated = true;
-                }
-
-                if ($dataUpdated) {
-                    $response = ['success' => true, 'message' => 'Profielgegevens bijgewerkt.'];
-                } else {
-                    $response['message'] = 'Ongeldige invoer voor naam of e-mailadres.';
-                }
-            }
-
-            if (isset($_POST['change_password'])) {
-                $currentPassword = $_POST['current_password'] ?? '';
-                $newPassword = $_POST['new_password'] ?? '';
-                $newPasswordRepeat = $_POST['new_password_repeat'] ?? '';
-
-                $stmt = $pdo->prepare("SELECT password FROM users WHERE id = ?");
-                $stmt->execute([$_SESSION['user_id']]);
-                $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-                if ($user && password_verify($currentPassword, $user['password']) && $newPassword === $newPasswordRepeat && strlen($newPassword) >= 8) {
-                    $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
-                    $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
-                    $stmt->execute([$newHash, $_SESSION['user_id']]);
-                    $response = ['success' => true, 'message' => 'Wachtwoord succesvol gewijzigd.'];
-                } else {
-                    $response = ['success' => false, 'message' => 'Wachtwoord wijzigen mislukt. Controleer uw huidige wachtwoord en of de nieuwe wachtwoorden overeenkomen (min. 8 tekens).'];
-                }
-            }
-
-            echo json_encode($response);
-            exit;
+        if ($this->isProfileAjaxRequest()) {
+            $this->handleProfileAjax($pdo);
+            return;
         }
 
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        $user = $this->fetchProfileUserOrRedirect($pdo, $userId);
+        $mijnVerslagen = $this->fetchOwnReports($pdo, $userId);
+        $samenwerkingen = $this->fetchCollaborations($pdo, $userId);
+        $clientPortals = $this->getMyClientPortals($pdo);
+        $msg = '';
+
+        include __DIR__ . '/../views/profile.php';
+    }
+
+    private function isProfileAjaxRequest(): bool {
+        return ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
+            && (isset($_POST['update_profile']) || isset($_POST['change_password']));
+    }
+
+    private function handleProfileAjax(PDO $pdo): void {
+        header(self::HEADER_JSON);
+        $response = ['success' => false, 'message' => 'Onbekende fout.'];
+
+        if (isset($_POST['update_profile'])) {
+            $response = $this->processProfileUpdate($pdo);
+        }
+
+        if (isset($_POST['change_password'])) {
+            $response = $this->processPasswordChange($pdo);
+        }
+
+        echo json_encode($response);
+        exit;
+    }
+
+    private function processProfileUpdate(PDO $pdo): array {
+        $fullname = trim($_POST['fullname'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+
+        if (!$fullname || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'message' => 'Ongeldige invoer voor naam of e-mailadres.'];
+        }
+
+        $stmt = $pdo->prepare("UPDATE users SET fullname = ?, email = ? WHERE id = ?");
+        $stmt->execute([$fullname, $email, $_SESSION['user_id']]);
+
+        $_SESSION['fullname'] = $fullname;
+        $_SESSION['email'] = $email;
+
+        return ['success' => true, 'message' => 'Profielgegevens bijgewerkt.'];
+    }
+
+    private function processPasswordChange(PDO $pdo): array {
+        $currentPassword = $_POST['current_password'] ?? '';
+        $newPassword = $_POST['new_password'] ?? '';
+        $newPasswordRepeat = $_POST['new_password_repeat'] ?? '';
+
+        $stmt = $pdo->prepare("SELECT password FROM users WHERE id = ?");
         $stmt->execute([$_SESSION['user_id']]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$user) {
-            session_destroy();
-            header("Location: ?page=login");
-            exit;
+        $passwordsValid = $newPassword === $newPasswordRepeat && strlen($newPassword) >= 8;
+        if ($user && password_verify($currentPassword, $user['password']) && $passwordsValid) {
+            $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
+            $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
+            $stmt->execute([$newHash, $_SESSION['user_id']]);
+            return ['success' => true, 'message' => 'Wachtwoord succesvol gewijzigd.'];
         }
 
-        // Haal ook de verslagen op die door de gebruiker zijn aangemaakt
-        $stmt = $pdo->prepare("SELECT id, projecttitel, klantnaam, created_at, pdf_version, pdf_up_to_date FROM bezoekverslag WHERE created_by = ? AND deleted_at IS NULL ORDER BY created_at DESC");
-        $stmt->execute([$_SESSION['user_id']]);
-        $mijnVerslagen = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return [
+            'success' => false,
+            'message' => 'Wachtwoord wijzigen mislukt. Controleer uw huidige wachtwoord en of de nieuwe wachtwoorden overeenkomen (min. 8 tekens).'
+        ];
+    }
 
-        // Haal verslagen op waar de gebruiker een collaborator is (en niet de eigenaar)
-        $stmtCollab = $pdo->prepare("
-            SELECT 
-                b.id, b.projecttitel, b.klantnaam, b.created_at, u.fullname as owner_name
+    private function fetchProfileUserOrRedirect(PDO $pdo, int $userId): array {
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user) {
+            return $user;
+        }
+
+        session_destroy();
+        header(self::REDIRECT_LOGIN);
+        exit;
+    }
+
+    private function fetchOwnReports(PDO $pdo, int $userId): array {
+        $stmt = $pdo->prepare("
+            SELECT id, projecttitel, klantnaam, created_at, pdf_version, pdf_up_to_date
+            FROM bezoekverslag
+            WHERE created_by = ? AND deleted_at IS NULL
+            ORDER BY created_at DESC
+        ");
+        $stmt->execute([$userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    private function fetchCollaborations(PDO $pdo, int $userId): array {
+        $stmt = $pdo->prepare("
+            SELECT
+                b.id,
+                b.projecttitel,
+                b.klantnaam,
+                b.created_at,
+                u.fullname as owner_name
             FROM verslag_collaborators vc
             JOIN bezoekverslag b ON vc.verslag_id = b.id
             JOIN users u ON b.created_by = u.id
             WHERE vc.user_id = ? AND b.created_by != ? AND b.deleted_at IS NULL
             ORDER BY b.created_at DESC
         ");
-        $stmtCollab->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
-        $samenwerkingen = $stmtCollab->fetchAll(PDO::FETCH_ASSOC);
-
-        // Haal verslagen op waar de gebruiker een collaborator is (en niet de eigenaar)
-        $stmtCollab = $pdo->prepare("
-            SELECT 
-                b.id, b.projecttitel, b.klantnaam, b.created_at, u.fullname as owner_name
-            FROM verslag_collaborators vc
-            JOIN bezoekverslag b ON vc.verslag_id = b.id
-            JOIN users u ON b.created_by = u.id
-            WHERE vc.user_id = ? AND b.created_by != ? AND b.deleted_at IS NULL
-            ORDER BY b.created_at DESC
-        ");
-        $stmtCollab->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
-        $samenwerkingen = $stmtCollab->fetchAll(PDO::FETCH_ASSOC);
-
-        // Haal de klantportalen op voor deze gebruiker
-        $clientPortals = $this->getMyClientPortals($pdo);
-
-        $msg = ''; // Voor eventuele feedback
-
-        include __DIR__ . '/../views/profile.php';
+        $stmt->execute([$userId, $userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
 
@@ -1024,3 +1047,4 @@ class AdminController {
         exit;
     }
 }
+

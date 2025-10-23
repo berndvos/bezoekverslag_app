@@ -66,7 +66,9 @@ class RuimteController {
 
         require_valid_csrf_token($_POST['csrf_token'] ?? null);
         $verslag_id = (int)($_GET['verslag_id'] ?? 0);
-        if (!$verslag_id) die("Geen verslag ID opgegeven.");
+        if (!$verslag_id) {
+            die("Geen verslag ID opgegeven.");
+        }
 
         $pdo = Database::getConnection();
 
@@ -135,7 +137,9 @@ class RuimteController {
         );
         $stmt->execute([$id]);
         $ruimte = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$ruimte) die("Ruimte niet gevonden.");
+        if (!$ruimte) {
+            die("Ruimte niet gevonden.");
+        }
 
         // Haal bestaande foto's op voor de view
         $fotoStmt = $pdo->prepare("SELECT id, pad FROM foto WHERE ruimte_id = ?");

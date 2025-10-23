@@ -15,7 +15,9 @@ function getCompressedImageBase64($imagePath, $quality = 75, $maxWidth = 800) {
 
     try {
         $imageInfo = getimagesize($imagePath);
-        if ($imageInfo === false) return null;
+        if ($imageInfo === false) {
+            return null;
+        }
 
         $mime = $imageInfo['mime'];
         $originalWidth = $imageInfo[0];
@@ -62,6 +64,7 @@ function hval($arr, $key) {
     $val = trim($arr[$key] ?? '');
     return $val !== '' ? nl2br(htmlspecialchars($val)) : '-';
 }
+$pdfPublicPath = __DIR__ . '/../../public/';
 ?>
 <!DOCTYPE html>
 <html lang="nl">
@@ -111,10 +114,10 @@ function hval($arr, $key) {
                 <!-- Logo links -->
                 <td style="width: 50%; vertical-align: middle; padding: 0; border: 0;">
                     <?php $logoPath = $brandingConfig['logo_path'] ?? ''; ?>
-                    <?php if (!empty($logoPath) && file_exists(__DIR__ . '/../../public/' . $logoPath)): ?>
+                    <?php if (!empty($logoPath) && file_exists($pdfPublicPath . $logoPath)): ?>
                         <?php
                             $type = pathinfo($logoPath, PATHINFO_EXTENSION);
-                            $data = file_get_contents(__DIR__ . '/../../public/' . $logoPath);
+                            $data = file_get_contents($pdfPublicPath . $logoPath);
                             $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
                             echo '<img src="' . $base64 . '" style="max-height: 40px; width: auto;">';
                         ?>
@@ -275,7 +278,7 @@ function hval($arr, $key) {
                     <div class="photo-gallery">
                         <h3>Foto's</h3>
                         <?php foreach ($ruimte['fotos'] as $foto): ?>
-                            <?php $imagePath = __DIR__ . '/../../public/' . $foto['pad']; ?>
+                            <?php $imagePath = $pdfPublicPath . $foto['pad']; ?>
                             <?php
                             // Gebruik de nieuwe compressiefunctie
                             $base64 = getCompressedImageBase64($imagePath, 75, 800); // Kwaliteit 75, max 800px breed

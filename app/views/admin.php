@@ -1,4 +1,5 @@
 <?php include 'layout/header.php'; ?>
+<?php $adminDateFormat = 'd-m-Y H:i'; ?>
 
 <style>
   /* Zorgt ervoor dat de ankerpunten niet achter de header vallen */
@@ -172,7 +173,7 @@
                     <tr>
                       <td><?= htmlspecialchars($pUser['email']) ?></td>
                       <td><?= htmlspecialchars($pUser['fullname']) ?></td>
-                      <td><?= htmlspecialchars(date('d-m-Y H:i', strtotime($pUser['created_at']))) ?></td>
+                      <td><?= htmlspecialchars(date($adminDateFormat, strtotime($pUser['created_at']))) ?></td>
                       <td class="text-center">
                         <form method="post" class="d-inline">
                             <?= csrf_field() ?>
@@ -259,7 +260,7 @@
                     <tr class="<?= $verslag['is_older_than_30_days'] ? 'table-danger' : '' ?>">
                       <td><?= htmlspecialchars($verslag['projecttitel']) ?></td>
                       <td><?= htmlspecialchars($verslag['klantnaam']) ?></td>
-                      <td><?= htmlspecialchars(date('d-m-Y H:i', strtotime($verslag['deleted_at']))) ?></td>
+                      <td><?= htmlspecialchars(date($adminDateFormat, strtotime($verslag['deleted_at']))) ?></td>
                       <td class="text-center d-flex justify-content-center gap-1">
                         <a href="<?= csrf_url('?page=admin_restore_verslag&id=' . (int)$verslag['id']) ?>" class="btn btn-sm btn-outline-success" title="Herstellen"><i class="bi bi-arrow-counterclockwise"></i></a>
                         <a href="<?= csrf_url('?page=admin_permanent_delete_verslag&id=' . (int)$verslag['id']) ?>" class="btn btn-sm btn-outline-danger" title="Permanent verwijderen" onclick="return confirm('Weet je zeker dat je dit verslag permanent wilt verwijderen? Alle bijbehorende ruimtes en foto\'s worden ook verwijderd. Deze actie kan niet ongedaan worden gemaakt.')"><i class="bi bi-x-octagon-fill"></i></a>
@@ -390,7 +391,7 @@
                 <?php if (!empty($logEntries)): ?>
                   <?php foreach ($logEntries as $log): ?>
                     <tr>
-                      <td class="text-nowrap"><?= htmlspecialchars(date('d-m-Y H:i', strtotime($log['created_at']))) ?></td>
+                      <td class="text-nowrap"><?= htmlspecialchars(date($adminDateFormat, strtotime($log['created_at']))) ?></td>
                       <td><?= htmlspecialchars($log['user_fullname']) ?></td>
                       <td><span class="badge bg-light text-dark"><?= htmlspecialchars($log['action']) ?></span></td>
                       <td><?= htmlspecialchars($log['details']) ?></td>
@@ -827,3 +828,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <?php include 'layout/footer.php'; ?>
+

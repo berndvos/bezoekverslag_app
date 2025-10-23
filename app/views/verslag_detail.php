@@ -296,9 +296,8 @@
         <div id="ruimtes" class="card mb-5 shadow-sm section-anchor">
           <div class="card-header bg-primary text-white"><i class="bi bi-door-open"></i> Ruimtes</div>
           <div class="card-body">
-            <a href="?page=ruimte_new&verslag_id=<?= (int)($verslag['id'] ?? 0) ?>" id="add-ruimte-button" class="btn btn-primary mb-3"><i class="bi bi-plus-lg"></i> Nieuwe ruimte</a> <?php
-            if ($ruimtes):
-            ?>
+            <a href="?page=ruimte_new&verslag_id=<?= (int)($verslag['id'] ?? 0) ?>" id="add-ruimte-button" class="btn btn-primary mb-3"><i class="bi bi-plus-lg"></i> Nieuwe ruimte</a>
+            <?php if (!empty($ruimtes)): ?>
             <table class="table table-striped">
               <thead><tr><th>Naam</th><th>Etage</th><th>Opmerkingen</th><th class="text-center">Foto's</th><th>Acties</th></tr></thead>
               <tbody>
