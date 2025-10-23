@@ -10,6 +10,8 @@ class AuthController {
 
     private const REMEMBER_COOKIE_NAME = 'remember_token';
     private const REMEMBER_COOKIE_LIFETIME = 86400 * 30; // 30 dagen
+    private const REDIRECT_DASHBOARD = 'Location: ?page=dashboard';
+    private const PLACEHOLDER_USER_FULLNAME = '{user_fullname}';
 
     private function isSecureRequest(): bool {
         return !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
@@ -73,7 +75,7 @@ class AuthController {
         // Als al ingelogd
         // Stuur alleen door als we NIET een gebruiker overnemen
         if (!empty($_SESSION['user_id']) && empty($_SESSION['original_user'])) {
-            header("Location: ?page=dashboard");
+            header(self::REDIRECT_DASHBOARD);
             exit;
         }
 
@@ -104,7 +106,7 @@ class AuthController {
                 $_SESSION['email'] = $user['email'];
                 $_SESSION['fullname'] = $user['fullname'];
                 $_SESSION['role'] = $user['role'];
-                header("Location: ?page=dashboard");
+                header(self::REDIRECT_DASHBOARD);
                 exit;
             }
 
@@ -148,7 +150,7 @@ class AuthController {
                 }
 
                 log_action('login_success', "Gebruiker '{$user['email']}' is ingelogd.");
-                header("Location: ?page=dashboard");
+                header(self::REDIRECT_DASHBOARD);
                 exit;
             } else {
                 $error = "Ongeldig e-mailadres of wachtwoord.";
@@ -341,7 +343,7 @@ class AuthController {
                 unset($_SESSION['pending_2fa_user_id'], $_SESSION['pending_2fa_remember']);
 
                 log_action('login_success_2fa', "Gebruiker '{$user['email']}' is ingelogd via 2FA.");
-                header("Location: ?page=dashboard");
+                header(self::REDIRECT_DASHBOARD);
                 exit;
             } else {
                 $error = "Ongeldige of verlopen code. Probeer het opnieuw.";
@@ -401,8 +403,8 @@ class AuthController {
             $mail->addAddress($user['email'], $user['fullname']);
 
             $resetLink = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]" . dirname($_SERVER['PHP_SELF']) . '/?page=reset&token=' . $token;
-            $subject = str_replace('{user_fullname}', $user['fullname'], $emailTemplate['subject']);
-            $body = str_replace(['{user_fullname}', '{reset_link}'], [$user['fullname'], $resetLink], $emailTemplate['body']);
+            $subject = str_replace(self::PLACEHOLDER_USER_FULLNAME, $user['fullname'], $emailTemplate['subject']);
+            $body = str_replace([self::PLACEHOLDER_USER_FULLNAME, '{reset_link}'], [$user['fullname'], $resetLink], $emailTemplate['body']);
 
             $mail->isHTML(true);
             $mail->Subject = $subject;
@@ -440,7 +442,7 @@ class AuthController {
         $approvalLink = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]" . dirname($_SERVER['PHP_SELF'], 2) . '/public/?page=admin#registraties';
 
         foreach ($admins as $admin) {
-            $placeholders = ['{admin_name}', '{user_fullname}', '{user_email}', '{approval_link}'];
+            $placeholders = ['{admin_name}', self::PLACEHOLDER_USER_FULLNAME, '{user_email}', '{approval_link}'];
             $values = [$admin['fullname'], $newUserName, $newUserEmail, $approvalLink];
 
             $subject = str_replace($placeholders, $values, $template['subject']);
@@ -465,7 +467,7 @@ class AuthController {
         }
 
         $loginLink = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]" . dirname($_SERVER['PHP_SELF'], 2) . '/public/?page=login';
-        $placeholders = ['{user_fullname}', '{login_link}'];
+        $placeholders = [self::PLACEHOLDER_USER_FULLNAME, '{login_link}'];
         $values = [$user['fullname'], $loginLink];
         $subject = str_replace($placeholders, $values, $template['subject']);
         $body = str_replace($placeholders, $values, $template['body']);

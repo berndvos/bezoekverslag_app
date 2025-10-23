@@ -10,6 +10,13 @@ use PHPMailer\PHPMailer\Exception;
 
 class AdminController {
 
+    private const REDIRECT_ADMIN = 'Location: ?page=admin';
+    private const REDIRECT_ADMIN_REGISTRATIONS = 'Location: ?page=admin#registraties';
+    private const REDIRECT_ADMIN_MAINTENANCE = 'Location: ?page=admin#onderhoud';
+    private const REDIRECT_ADMIN_TRASH = 'Location: ?page=admin#prullenbak';
+    private const HEADER_JSON = 'Content-Type: application/json';
+    private const BRANDING_CONFIG_RELATIVE_PATH = '/../../config/branding.php';
+
     /** Gebruikersoverzicht */
     public function users() {
         requireRole(['admin', 'poweruser']);
@@ -25,7 +32,7 @@ class AdminController {
             if ($this->createUser($pdo)) {
                 log_action('user_created', "Gebruiker '{$_POST['email']}' aangemaakt.");
             }
-            header("Location: ?page=admin");
+            header(self::REDIRECT_ADMIN);
             exit;
         }
 
@@ -36,7 +43,7 @@ class AdminController {
                 $_SESSION['flash_message'] = ['type' => 'success', 'text' => 'Gebruiker succesvol bijgewerkt.'];
                 log_action('user_updated', "Gebruiker '{$_POST['email']}' bijgewerkt.");
             }
-            header("Location: ?page=admin");
+            header(self::REDIRECT_ADMIN);
             exit;
         }
 
@@ -46,14 +53,14 @@ class AdminController {
             if ($this->handleLogoUpload()) {
                 $_SESSION['flash_message'] = ['type' => 'success', 'text' => 'Logo succesvol geüpload.'];
             }
-            header("Location: ?page=admin#onderhoud");
+            header(self::REDIRECT_ADMIN_MAINTENANCE);
             exit;
         }
 
         // Branding instellingen bijwerken
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_branding'])) {
             // AJAX afhandeling
-            header('Content-Type: application/json');
+            header(self::HEADER_JSON);
             require_valid_csrf_token($_POST['csrf_token'] ?? null);
             if ($this->saveBrandingSettings()) {
                 echo json_encode(['success' => true, 'message' => 'Huisstijl-instellingen succesvol opgeslagen.']);
@@ -67,7 +74,7 @@ class AdminController {
         // E-mail sjablonen bijwerken
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_email_templates'])) {
             // AJAX afhandeling
-            header('Content-Type: application/json');
+            header(self::HEADER_JSON);
             require_valid_csrf_token($_POST['csrf_token'] ?? null);
             if ($this->saveEmailTemplates()) {
                 echo json_encode(['success' => true, 'message' => 'E-mail sjablonen succesvol opgeslagen.']);
@@ -82,7 +89,7 @@ class AdminController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['manage_registration'])) {
             require_valid_csrf_token($_POST['csrf_token'] ?? null);
             $this->manageRegistration($pdo);
-            header("Location: ?page=admin#registraties");
+            header(self::REDIRECT_ADMIN_REGISTRATIONS);
             exit;
         }
 
@@ -121,7 +128,7 @@ class AdminController {
     }
 
     private function getBrandingSettings() {
-        $configFile = __DIR__ . '/../../config/branding.php';
+        $configFile = __DIR__ . self::BRANDING_CONFIG_RELATIVE_PATH;
         return file_exists($configFile) ? require $configFile : [];
     }
     // Public gemaakt zodat andere controllers het ook kunnen gebruiken
@@ -278,7 +285,7 @@ class AdminController {
 
         if (!$id || $id === $_SESSION['user_id']) {
              $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Ongeldige actie. U kunt uzelf niet verwijderen.'];
-             header("Location: ?page=admin");
+             header(self::REDIRECT_ADMIN);
              exit;
         }
 
@@ -289,7 +296,7 @@ class AdminController {
         $userEmail = $pdo->query("SELECT email FROM users WHERE id = $id")->fetchColumn(); // Tijdelijk om email te krijgen
         log_action('user_deleted', "Gebruiker #{$id} ('{$userEmail}') is verwijderd.");
 
-        header("Location: ?page=admin");
+        header(self::REDIRECT_ADMIN);
         exit;
     }
 
@@ -305,7 +312,7 @@ class AdminController {
         // Voorkom dat je jezelf overneemt of een niet-bestaande gebruiker
         if ($id === $_SESSION['user_id']) {
              $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'U kunt uzelf niet overnemen.'];
-             header("Location: ?page=admin");
+             header(self::REDIRECT_ADMIN);
              exit;
         }
 
@@ -316,7 +323,7 @@ class AdminController {
 
         if (!$targetUser) {
             $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Gebruiker niet gevonden.'];
-            header("Location: ?page=admin");
+            header(self::REDIRECT_ADMIN);
             exit;
         }
 
@@ -459,7 +466,7 @@ class AdminController {
     }
 
     private function saveBrandingSettings() {
-        $configFile = __DIR__ . '/../../config/branding.php';
+        $configFile = __DIR__ . self::BRANDING_CONFIG_RELATIVE_PATH;
         $currentSettings = $this->getBrandingSettings();
 
         // Behoud het logo-pad, update alleen de kleuren
@@ -497,7 +504,7 @@ class AdminController {
         $stmt->execute([$id]);
         log_action('verslag_restored', "Bezoekverslag #{$id} is hersteld uit de prullenbak.");
         $_SESSION['flash_message'] = ['type' => 'success', 'text' => 'Bezoekverslag is succesvol hersteld.'];
-        header("Location: ?page=admin#prullenbak");
+        header(self::REDIRECT_ADMIN_TRASH);
         exit;
     }
 
@@ -531,7 +538,7 @@ class AdminController {
         $pdo->prepare("DELETE FROM bezoekverslag WHERE id = ?")->execute([$id]);
         log_action('verslag_permanently_deleted', "Bezoekverslag #{$id} is permanent verwijderd.");
         $_SESSION['flash_message'] = ['type' => 'success', 'text' => 'Bezoekverslag is permanent verwijderd.'];
-        header("Location: ?page=admin#prullenbak");
+        header(self::REDIRECT_ADMIN_TRASH);
         exit;
     }
 
@@ -549,7 +556,7 @@ class AdminController {
         }
         log_action('trash_emptied', count($verslagenToDelete) . ' oude verslagen zijn permanent verwijderd uit de prullenbak.');
         $_SESSION['flash_message'] = ['type' => 'success', 'text' => count($verslagenToDelete) . ' oude verslagen zijn permanent verwijderd.'];
-        header("Location: ?page=admin#prullenbak");
+        header(self::REDIRECT_ADMIN_TRASH);
         exit;
     }
 
@@ -681,7 +688,7 @@ class AdminController {
             if (move_uploaded_file($_FILES['company_logo']['tmp_name'], $filePath)) {
                 $dbPath = 'uploads/branding/' . $safeName;
                 
-                $configFile = __DIR__ . '/../../config/branding.php';
+                $configFile = __DIR__ . self::BRANDING_CONFIG_RELATIVE_PATH;
                 $currentSettings = $this->getBrandingSettings();
                 $newSettings = $currentSettings;
                 $newSettings['logo_path'] = $dbPath;
@@ -706,7 +713,9 @@ class AdminController {
         $stmt->execute([$verslag_id]);
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$data) return;
+        if (!$data) {
+            return;
+        }
 
         $emailTemplates = $this->getEmailTemplates();
         $emailTemplate = $emailTemplates['client_portal_extended'] ?? null;
@@ -718,7 +727,9 @@ class AdminController {
         $values = [$data['fullname'], $data['projecttitel'], $loginLink, $formattedDate];
 
         // Voorkom fout als template niet bestaat
-        if (!$emailTemplate) return;
+        if (!$emailTemplate) {
+            return;
+        }
 
         $subject = str_replace($placeholders, $values, $emailTemplate['subject'] ?? '');
         $body = str_replace($placeholders, $values, $emailTemplate['body'] ?? '');
@@ -832,7 +843,7 @@ class AdminController {
 
         // Gegevens bijwerken
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['update_profile']) || isset($_POST['change_password']))) {
-            header('Content-Type: application/json');
+            header(self::HEADER_JSON);
             $response = ['success' => false, 'message' => 'Onbekende fout.'];
 
             if (isset($_POST['update_profile'])) {
