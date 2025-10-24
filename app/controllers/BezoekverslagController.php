@@ -30,10 +30,14 @@ class BezoekverslagController {
         $pdo = Database::getConnection();
 
         $search = $_GET['search'] ?? '';
-        $params = [];
-
         $userId = (int)($_SESSION['user_id'] ?? 0);
-        $params[':userId'] = $userId;
+        $isAdmin = isAdmin();
+        $params = [
+            ':userId' => $userId,
+            ':userIdCollab' => $userId,
+            ':userIdEdit' => $userId,
+            ':isAdmin' => $isAdmin ? 1 : 0,
+        ];
 
         $sql = "
             SELECT 
@@ -43,19 +47,26 @@ class BezoekverslagController {
                  FROM foto f 
                  JOIN ruimte r ON f.ruimte_id = r.id 
                  WHERE r.verslag_id = b.id) AS photo_count,
-                (CASE WHEN b.created_by = :userId THEN 1 ELSE 0 END) as is_owner
+                CASE WHEN b.created_by = :userId THEN 1 ELSE 0 END AS is_owner,
+                CASE WHEN EXISTS (
+                    SELECT 1 FROM verslag_collaborators vc WHERE vc.verslag_id = b.id AND vc.user_id = :userIdCollab
+                ) THEN 1 ELSE 0 END AS is_collaborator,
+                CASE WHEN :isAdmin = 1 
+                    OR b.created_by = :userId 
+                    OR EXISTS (
+                        SELECT 1 FROM verslag_collaborators vc2 WHERE vc2.verslag_id = b.id AND vc2.user_id = :userIdEdit
+                    )
+                THEN 1 ELSE 0 END AS can_edit
             FROM bezoekverslag b
             LEFT JOIN users u ON b.created_by = u.id 
-            LEFT JOIN verslag_collaborators vc ON b.id = vc.verslag_id
-            WHERE b.deleted_at IS NULL
-            AND (b.created_by = :userId OR vc.user_id = :userId)";
+            WHERE b.deleted_at IS NULL";
         
         if (!empty($search)) {
             $sql .= " AND (b.klantnaam LIKE :search OR b.projecttitel LIKE :search)";
             $params[':search'] = '%' . $search . '%';
         }
 
-        $sql .= " GROUP BY b.id ORDER BY b.created_at DESC";
+        $sql .= " ORDER BY b.created_at DESC";
         
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
@@ -399,20 +410,9 @@ class BezoekverslagController {
     }
     /* ================= VERWIJDEREN ================= */
     public function delete($id) {
-        requireRole(['admin', 'poweruser', 'accountmanager']);
+        requireRole(['admin', 'poweruser']);
         require_valid_csrf_token($_GET['csrf_token'] ?? null);
         $pdo = Database::getConnection();
-
-        // Een accountmanager mag alleen zijn eigen verslagen verwijderen
-        if (!isAdmin()) {
-            $stmt = $pdo->prepare("SELECT id FROM bezoekverslag WHERE id = ? AND created_by = ?");
-            $stmt->execute([$id, $_SESSION['user_id']]);
-            if (!$stmt->fetch()) {
-                $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'U heeft geen rechten om dit verslag te verwijderen.'];
-                header(self::REDIRECT_DASHBOARD);
-                exit;
-            }
-        }
 
         // Soft delete: zet de deleted_at timestamp
         $stmt = $pdo->prepare("UPDATE bezoekverslag SET deleted_at = NOW() WHERE id = ?");

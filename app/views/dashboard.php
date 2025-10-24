@@ -47,11 +47,22 @@
                         <td><?= htmlspecialchars($v['klantnaam'] ?? '-') ?></td>
                         <td><?= htmlspecialchars($v['projecttitel'] ?? '-') ?></td>
                         <td>
-                            <?php if ($v['is_owner']): ?>
-                                <span class="badge bg-success-subtle text-success-emphasis rounded-pill">Eigenaar</span>
-                            <?php else: ?>
-                                <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill">Collaborator</span>
-                            <?php endif; ?>
+                            <?php
+                                $relationshipBadge = 'bg-secondary-subtle text-secondary-emphasis';
+                                $relationshipLabel = 'Alleen-lezen';
+
+                                if (!empty($v['is_owner'])) {
+                                    $relationshipBadge = 'bg-success-subtle text-success-emphasis';
+                                    $relationshipLabel = 'Eigenaar';
+                                } elseif (!empty($v['is_collaborator'])) {
+                                    $relationshipBadge = 'bg-primary-subtle text-primary-emphasis';
+                                    $relationshipLabel = 'Samenwerker';
+                                } elseif (!empty($v['can_edit']) && isAdmin()) {
+                                    $relationshipBadge = 'bg-info-subtle text-info-emphasis';
+                                    $relationshipLabel = 'Beheer';
+                                }
+                            ?>
+                            <span class="badge <?= $relationshipBadge ?> rounded-pill"><?= $relationshipLabel ?></span>
                         </td>
                         <td><?= htmlspecialchars($v['created_by_name'] ?? 'Onbekend') ?></td>
                         <td class="text-center">
@@ -67,7 +78,7 @@
                         </td>
                         <td><?= !empty($v['pdf_generated_at']) ? date('d-m-Y H:i', strtotime($v['pdf_generated_at'])) : '-' ?></td>
                         <td class="text-nowrap">
-                            <?php if (isAdmin() || $v['created_by'] == $_SESSION['user_id']): ?>
+                            <?php if (!empty($v['can_edit'])): ?>
                                 <a href="?page=bewerk&id=<?= $v['id'] ?>" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-pencil"></i> Bewerken
                                 </a>

@@ -209,17 +209,13 @@ class ClientController {
     }
 
     private function handleClientUploads(PDO $pdo, int $verslagId, int $ruimteId): void {
-        if (empty($_FILES['files']['name'][0])) {
+        $files = $_FILES['files'] ?? null;
+        if (!$files || empty($files['name'][0])) {
             return;
         }
 
         $uploadDir = __DIR__ . self::PUBLIC_UPLOAD_BASE . 'uploads/client/' . $verslagId . '/' . $ruimteId . '/';
-        if (!extension_loaded('fileinfo')) {
-            $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Uploads zijn momenteel niet beschikbaar.'];
-            return;
-        }
-        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
-            $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Uploadmap kon niet worden aangemaakt. Probeer het later opnieuw of neem contact op met uw accountmanager.'];
+        if (!$this->ensureClientUploadPreconditions($uploadDir)) {
             return;
         }
 
@@ -230,37 +226,71 @@ class ClientController {
             'image/webp' => 'webp',
         ];
         $maxSize = 10 * 1024 * 1024;
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $candidates = $this->collectClientUploadCandidates($files, $allowedMime, $maxSize);
 
-        for ($i = 0, $total = count($_FILES['files']['name']); $i < $total; $i++) {
-            if (($_FILES['files']['error'][$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-                continue;
-            }
-            if (!is_uploaded_file($_FILES['files']['tmp_name'][$i] ?? '')) {
-                continue;
-            }
-
-            $size = $_FILES['files']['size'][$i] ?? 0;
-            if ($size <= 0 || $size > $maxSize) {
-                continue;
-            }
-
-            $mime = finfo_file($finfo, $_FILES['files']['tmp_name'][$i]);
-            if (!$mime || !isset($allowedMime[$mime])) {
-                continue;
-            }
-
-            $filename = bin2hex(random_bytes(16)) . '.' . $allowedMime[$mime];
+        foreach ($candidates as $candidate) {
+            $filename = bin2hex(random_bytes(16)) . '.' . $candidate['extension'];
             $destination = $uploadDir . $filename;
-            if (!move_uploaded_file($_FILES['files']['tmp_name'][$i], $destination)) {
+            if (!move_uploaded_file($candidate['tmp'], $destination)) {
                 continue;
             }
 
             $pdo->prepare('INSERT INTO foto (ruimte_id, pad, created_at) VALUES (?, ?, NOW())')
                 ->execute([$ruimteId, 'client/' . $verslagId . '/' . $ruimteId . '/' . $filename]);
         }
+    }
+
+    private function ensureClientUploadPreconditions(string $uploadDir): bool {
+        if (!extension_loaded('fileinfo')) {
+            $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Uploads zijn momenteel niet beschikbaar.'];
+            return false;
+        }
+
+        if (is_dir($uploadDir) || mkdir($uploadDir, 0755, true) || is_dir($uploadDir)) {
+            return true;
+        }
+
+        $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Uploadmap kon niet worden aangemaakt. Probeer het later opnieuw of neem contact op met uw accountmanager.'];
+        return false;
+    }
+
+    private function collectClientUploadCandidates(array $files, array $allowedMime, int $maxSize): array {
+        $candidates = [];
+        $total = count($files['name']);
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if (!$finfo) {
+            return $candidates;
+        }
+
+        for ($i = 0; $i < $total; $i++) {
+            $error = $files['error'][$i] ?? UPLOAD_ERR_NO_FILE;
+            if ($error !== UPLOAD_ERR_OK) {
+                continue;
+            }
+
+            $tmpName = $files['tmp_name'][$i] ?? '';
+            if (!is_uploaded_file($tmpName)) {
+                continue;
+            }
+
+            $size = $files['size'][$i] ?? 0;
+            if ($size <= 0 || $size > $maxSize) {
+                continue;
+            }
+
+            $mime = finfo_file($finfo, $tmpName);
+            if (!$mime || !isset($allowedMime[$mime])) {
+                continue;
+            }
+
+            $candidates[] = [
+                'tmp' => $tmpName,
+                'extension' => $allowedMime[$mime],
+            ];
+        }
 
         finfo_close($finfo);
+        return $candidates;
     }
 
     private function markClientModification(PDO $pdo, int $verslagId): void {
@@ -326,5 +356,6 @@ class ClientController {
         }
     }
 }
+
 
 
