@@ -388,7 +388,7 @@ class AuthController {
             session_start();
         }
 
-        // Als er geen gebruiker is die moet verifiÃ«ren, terug naar login
+        // Als er geen gebruiker is die moet verifiÃƒÂ«ren, terug naar login
         if (empty($_SESSION['pending_2fa_user_id'])) {
             header('Location: ?page=login');
             exit;
@@ -562,3 +562,4 @@ class AuthController {
         return $adminController->sendPublicEmail($user['email'], $user['fullname'], $subject, $body, $mailSettings);
     }
 }
+

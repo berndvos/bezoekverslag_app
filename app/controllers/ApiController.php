@@ -66,7 +66,7 @@ class ApiController {
 
             error_log(sprintf(
                 '[DEBUG] OpenPostcode call -> %s | HTTP: %s | cURLError: %s | CT: %s | Body: %s',
-                $url,
+$url,
                 (string)($httpCode ?? 'unknown'),
                 $curlError ?? 'none',
                 $contentType ?? 'unknown',
@@ -77,15 +77,15 @@ class ApiController {
                 return [$response, null];
             }
 
-            $lastError = $curlError ?? (is_string($response) ? $response : 'Onbekende fout');
+            if ($curlError !== null) {
+                $lastError = $curlError;
+            } else {
+                $lastError = is_string($response) ? $response : 'Onbekende fout';
+            }
         }
 
         return [null, $lastError];
     }
-
-    /**
-     * @return array{0:string|false,1:int|null,2:string|null,3:string|null}
-     */
     private function performCurlRequest(string $url): array {
         $ch = curl_init();
         curl_setopt_array($ch, [
@@ -191,6 +191,8 @@ class ApiController {
         exit;
     }
 }
+
+
 
 
 
