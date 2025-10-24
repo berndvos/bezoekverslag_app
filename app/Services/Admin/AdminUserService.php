@@ -9,55 +9,91 @@ class AdminUserService
 {
     public function createUser(PDO $pdo, array $input): AdminServiceResponse
     {
+        $validation = $this->validateCreateInput($input);
+        if (!$validation->success) {
+            return $validation;
+        }
+
+        $fullname = $validation->data['fullname'];
+        $email = $validation->data['email'];
+        $role = $validation->data['role'];
+
+        if ($this->emailExists($pdo, $email)) {
+            return new AdminServiceResponse(false, 'Dit e-mailadres is al in gebruik.', 'danger');
+        }
+
+        $userId = $this->insertNewUser($pdo, $fullname, $email, $role);
+        if ($userId === 0) {
+            return new AdminServiceResponse(false, 'Kon gebruiker niet opslaan.', 'danger');
+        }
+
+        $user = $this->findUserById($pdo, $userId);
+        list($type, $message) = $this->buildCreateUserMessage($pdo, $user);
+
+        if (function_exists('log_action')) {
+            log_action('user_created', "Gebruiker '{$email}' aangemaakt.");
+        }
+
+        return new AdminServiceResponse(true, $message, $type);
+    }
+
+    private function validateCreateInput(array $input): AdminServiceResponse
+    {
         $fullname = trim($input['fullname'] ?? '');
         $email = trim($input['email'] ?? '');
         $role = $input['role'] ?? '';
 
-        $response = null;
         if ($fullname === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || $role === '') {
-            $response = new AdminServiceResponse(false, 'Vul alle velden correct in.', 'danger');
-        } else {
-            $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
-            $stmt->execute([$email]);
-            if ($stmt->fetch()) {
-                $response = new AdminServiceResponse(false, 'Dit e-mailadres is al in gebruik.', 'danger');
-            } else {
-                $temporaryPassword = bin2hex(random_bytes(16));
-                $passwordHash = password_hash($temporaryPassword, PASSWORD_DEFAULT);
-
-                $stmt = $pdo->prepare(
-                    "INSERT INTO users (fullname, email, password, role, status, created_at) VALUES (?, ?, ?, ?, 'active', NOW())"
-                );
-
-                if (!$stmt->execute([$fullname, $email, $passwordHash, $role])) {
-                    $response = new AdminServiceResponse(false, 'Kon gebruiker niet opslaan.', 'danger');
-                } else {
-                    $newUserId = (int) $pdo->lastInsertId();
-                    $stmtUser = $pdo->prepare('SELECT id, email, fullname FROM users WHERE id = ?');
-                    $stmtUser->execute([$newUserId]);
-                    $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
-
-                    if ($user && $this->sendPasswordSetupLink($pdo, $user)) {
-                        $message = 'Gebruiker aangemaakt. Er is een e-mail verstuurd met instructies om een wachtwoord in te stellen.';
-                        $type = 'success';
-                    } elseif ($user) {
-                        $message = 'Gebruiker aangemaakt, maar versturen van de wachtwoord e-mail is mislukt. Laat de gebruiker handmatig een reset aanvragen.';
-                        $type = 'warning';
-                    } else {
-                        $message = 'Gebruiker aangemaakt, maar kon geen resetlink versturen.';
-                        $type = 'warning';
-                    }
-
-                    if (function_exists('log_action')) {
-                        log_action('user_created', "Gebruiker '{$email}' aangemaakt.");
-                    }
-
-                    $response = new AdminServiceResponse(true, $message, $type);
-                }
-            }
+            return new AdminServiceResponse(false, 'Vul alle velden correct in.', 'danger');
         }
 
-        return $response ?? new AdminServiceResponse(false, 'Onbekende fout bij aanmaken gebruiker.', 'danger');
+        return new AdminServiceResponse(true, '', 'info', [
+            'fullname' => $fullname,
+            'email' => $email,
+            'role' => $role,
+        ]);
+    }
+
+    private function emailExists(PDO $pdo, string $email): bool
+    {
+        $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
+        $stmt->execute([$email]);
+        return (bool)$stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    private function insertNewUser(PDO $pdo, string $fullname, string $email, string $role): int
+    {
+        $temporaryPassword = bin2hex(random_bytes(16));
+        $passwordHash = password_hash($temporaryPassword, PASSWORD_DEFAULT);
+
+        $stmt = $pdo->prepare(
+            "INSERT INTO users (fullname, email, password, role, status, created_at) VALUES (?, ?, ?, ?, 'active', NOW())"
+        );
+
+        if (!$stmt->execute([$fullname, $email, $passwordHash, $role])) {
+            return 0;
+        }
+
+        return (int)$pdo->lastInsertId();
+    }
+
+    private function findUserById(PDO $pdo, int $id): ?array
+    {
+        $stmtUser = $pdo->prepare('SELECT id, email, fullname FROM users WHERE id = ?');
+        $stmtUser->execute([$id]);
+        $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
+        return $user ?: null;
+    }
+
+    private function buildCreateUserMessage(PDO $pdo, ?array $user): array
+    {
+        if ($user && $this->sendPasswordSetupLink($pdo, $user)) {
+            return ['success', 'Gebruiker aangemaakt. Er is een e-mail verstuurd met instructies om een wachtwoord in te stellen.'];
+        }
+        if ($user) {
+            return ['warning', 'Gebruiker aangemaakt, maar versturen van de wachtwoord e-mail is mislukt. Laat de gebruiker handmatig een reset aanvragen.'];
+        }
+        return ['warning', 'Gebruiker aangemaakt, maar kon geen resetlink versturen.'];
     }
     public function manageRegistration(PDO $pdo, array $input, array $session): AdminServiceResponse
     {
