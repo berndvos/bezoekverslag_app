@@ -160,12 +160,12 @@ class AdminController {
 
     private function getBrandingSettings() {
         $configFile = __DIR__ . self::BRANDING_CONFIG_RELATIVE_PATH;
-        return file_exists($configFile) ? require_once $configFile : [];
+        return \\App\\Config\\Branding::get();
     }
     // Public gemaakt zodat andere controllers het ook kunnen gebruiken
     public function getEmailTemplates() {
         $configFile = __DIR__ . '/../../config/email_templates.php';
-        return file_exists($configFile) ? require_once $configFile : [];
+        return \\App\\Config\\EmailTemplates::get();
     }
 
     /**
@@ -1049,6 +1049,7 @@ class AdminController {
         exit;
     }
 }
+
 
 
 
