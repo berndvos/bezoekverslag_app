@@ -6,7 +6,7 @@ final class Branding
 {
     public static function get(): array
     {
-         = __DIR__ . DIRECTORY_SEPARATOR . 'branding.php';
-        return \file_exists() ? require  : [];
+        $file = __DIR__ . DIRECTORY_SEPARATOR . 'branding.php';
+        return \file_exists($file) ? require $file : [];
     }
 }
