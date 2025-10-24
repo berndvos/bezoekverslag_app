@@ -65,7 +65,7 @@ class UpdateController {
 
             echo json_encode($response);
             exit;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Fout bij het controleren op updates: ' . $e->getMessage()]);
             exit;
@@ -80,6 +80,9 @@ class UpdateController {
         $url = self::GITHUB_API_URL . self::GITHUB_REPO . '/releases/latest';
 
         $ch = curl_init();
+        if ($ch === false) {
+            return ['error' => 'Kon geen cURL sessie initialiseren. Controleer of de cURL-extensie correct is geconfigureerd.'];
+        }
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         // SSL verificatie is belangrijk voor de veiligheid.
@@ -251,6 +254,10 @@ class UpdateController {
         }
 
         $ch = curl_init($url);
+        if ($ch === false) {
+            fclose($fp);
+            return false;
+        }
         curl_setopt($ch, CURLOPT_FILE, $fp);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Volg redirects, belangrijk voor GitHub downloads
         curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
