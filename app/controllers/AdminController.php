@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Controllers;
 
@@ -160,12 +160,12 @@ class AdminController {
 
     private function getBrandingSettings() {
         $configFile = __DIR__ . self::BRANDING_CONFIG_RELATIVE_PATH;
-        return \\App\\Config\\Branding::get();
+        return \App\Config\Branding::get();
     }
     // Public gemaakt zodat andere controllers het ook kunnen gebruiken
     public function getEmailTemplates() {
         $configFile = __DIR__ . '/../../config/email_templates.php';
-        return \\App\\Config\\EmailTemplates::get();
+        return \App\Config\EmailTemplates::get();
     }
 
     /**
@@ -1049,6 +1049,7 @@ class AdminController {
         exit;
     }
 }
+
 
 
 
