@@ -518,10 +518,10 @@ class AdminController {
 
     private function getDeletedVerslagen($pdo) {
         $stmt = $pdo->query("
-            SELECT id, klantnaam, projecttitel, deleted_at, 
+            SELECT id, klantnaam, projecttitel, deleted_at,
                    (deleted_at < DATE_SUB(NOW(), INTERVAL 30 DAY)) as is_older_than_30_days
-            FROM bezoekverslag 
-            WHERE deleted_at IS NOT NULL 
+            FROM bezoekverslag
+            WHERE deleted_at IS NOT NULL
             ORDER BY deleted_at DESC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -577,11 +577,11 @@ class AdminController {
         requireRole(['admin', 'poweruser']);
         require_valid_csrf_token($_GET['csrf_token'] ?? null);
         $pdo = Database::getConnection();
-    
+
         // Haal eerst de IDs op van de te verwijderen verslagen om de bestanden op te ruimen
         $stmt = $pdo->query("SELECT id FROM bezoekverslag WHERE deleted_at < DATE_SUB(NOW(), INTERVAL 30 DAY)");
         $verslagenToDelete = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
         foreach ($verslagenToDelete as $verslag) {
             $this->deleteVerslagFiles($pdo, $verslag['id']);
         }
@@ -598,7 +598,7 @@ class AdminController {
     private function getMyClientPortals($pdo) {
         $userId = (int)($_SESSION['user_id'] ?? 0);
         $sql = "
-            SELECT 
+            SELECT
                 ca.bezoekverslag_id AS verslag_id,
                 ca.email AS cp_email,
                 ca.expires_at,
@@ -616,7 +616,7 @@ class AdminController {
 
     public function getClientPortals($pdo) {
         $sql = "
-            SELECT 
+            SELECT
                 ca.bezoekverslag_id AS verslag_id,
                 ca.email AS cp_email,
                 ca.expires_at,
@@ -718,7 +718,7 @@ class AdminController {
 
             if (move_uploaded_file($_FILES['company_logo']['tmp_name'], $filePath)) {
                 $dbPath = 'uploads/branding/' . $safeName;
-                
+
                 $configFile = __DIR__ . self::BRANDING_CONFIG_RELATIVE_PATH;
                 $currentSettings = $this->getBrandingSettings();
                 $newSettings = $currentSettings;
@@ -782,7 +782,7 @@ class AdminController {
             $mail->Username   = $mailSettings['username'];
             $mail->Password   = $mailSettings['password'];
             if (!empty($mailSettings['encryption'])) {
-                $mail->SMTPSecure = ($mailSettings['encryption'] === 'ssl') 
+                $mail->SMTPSecure = ($mailSettings['encryption'] === 'ssl')
                     ? PHPMailer::ENCRYPTION_SMTPS
                     : PHPMailer::ENCRYPTION_STARTTLS;
             }
@@ -1015,7 +1015,7 @@ class AdminController {
             $_SESSION['email'] = $originalUser['email'];
             $_SESSION['fullname'] = $originalUser['fullname'];
             $_SESSION['role'] = $originalUser['role'];
-            
+
             // Log de actie nu de originele sessie hersteld is
             log_action('impersonate_stop', "Admin '{$_SESSION['email']}' heeft de overname van '{$impersonatedEmail}' beÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â«indigd.");
         }
@@ -1049,6 +1049,7 @@ class AdminController {
         exit;
     }
 }
+
 
 
 
