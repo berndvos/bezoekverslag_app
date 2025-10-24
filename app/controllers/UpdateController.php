@@ -200,7 +200,9 @@ class UpdateController {
      * Maakt een back-up van de applicatiebestanden en database.
      */
     private function createBackup($backupDir) {
-        if (!mkdir($backupDir, 0777, true)) return false;
+        if (!mkdir($backupDir, 0777, true)) {
+            return false;
+        }
 
         // Database back-up
         $adminController = new AdminController();

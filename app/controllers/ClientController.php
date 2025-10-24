@@ -98,140 +98,175 @@ class ClientController {
     }
 
     /** UPDATE (publiek) â€“ beperkte updates door klant */
+    /** UPDATE (publiek) – beperkte updates door klant */
     public function update($verslag_id) {
-        if (empty($_SESSION['client_id'])) {
-            header(self::REDIRECT_CLIENT_LOGIN);
-            exit;
-        }
-        if ((int)$verslag_id !== (int)($_SESSION['bezoekverslag_id'] ?? 0)) {
-            die("<div style='padding:20px;font-family:sans-serif;color:#b00;'>Geen toegang tot dit verslag.</div>");
-        }
-
-        $canEdit = !empty($_SESSION['client_can_edit']);
-        if (!$canEdit) {
-            die("<div style='padding:20px;font-family:sans-serif;color:#b00;'>Je hebt alleen-lezen rechten.</div>");
-        }
+        $verslag_id = (int)$verslag_id;
+        $this->ensureClientEditAccess($verslag_id);
 
         $pdo = Database::getConnection();
         $action = $_POST['action'] ?? '';
 
-        // Alleen deze secties zijn toegestaan
-        if ($action === 'save_wensen_installatie') {
-            $stmt = $pdo->prepare("UPDATE bezoekverslag SET wensen = :wensen, eisen = :eisen, installatie = :installatie, last_modified_at = NOW(), last_modified_by='client' WHERE id = :id");
-            $stmt->execute([
-                ':wensen' => $_POST['wensen'] ?? '',
-                ':eisen' => $_POST['eisen'] ?? '',
-                ':installatie' => $_POST['installatie'] ?? '',
-                ':id' => $verslag_id
-            ]);
+        switch ($action) {
+            case 'save_wensen_installatie':
+                $this->updateClientPreferences($pdo, $verslag_id);
+                break;
+            case 'save_ruimte':
+                $this->updateClientRoom($pdo, $verslag_id);
+                break;
+            default:
+                break;
         }
 
-        if ($action === 'save_ruimte') {
-            $ruimte_id = (int)($_POST['ruimte_id'] ?? 0);
-
-            // Zorg dat ruimte bij dit verslag hoort
-            $chk = $pdo->prepare("SELECT id FROM ruimte WHERE id=? AND verslag_id=?");
-            $chk->execute([$ruimte_id, $verslag_id]);
-            if (!$chk->fetchColumn()) {
-                die("<div style='padding:20px;font-family:sans-serif;color:#b00;'>Ongeldige ruimte.</div>");
-            }
-
-            // Toegestane velden (aanvullen)
-            $stmt = $pdo->prepare("
-                UPDATE ruimte SET
-                    etage=:etage,
-                    bereikbaarheid=:bereikbaarheid,
-                    lift=:lift,
-                    afm_lift=:afm_lift,
-                    voorzieningen=:voorzieningen,
-                    bereikb_voorzieningen=:bereikb_voorzieningen,
-                    kabellengte=:kabellengte,
-                    netwerkintegratie=:netwerkintegratie,
-                    afmetingen=:afmetingen,
-                    plafond=:plafond,
-                    wand=:wand,
-                    vloer=:vloer,
-                    beperkingen=:beperkingen,
-                    opmerkingen=:opmerkingen
-                WHERE id=:id
-            ");
-            $stmt->execute([
-                ':etage' => $_POST['etage'] ?? '',
-                ':bereikbaarheid' => $_POST['bereikbaarheid'] ?? '',
-                ':lift' => $_POST['lift'] ?? '',
-                ':afm_lift' => $_POST['afm_lift'] ?? '',
-                ':voorzieningen' => $_POST['voorzieningen'] ?? '',
-                ':bereikb_voorzieningen' => $_POST['bereikb_voorzieningen'] ?? '',
-                ':kabellengte' => $_POST['kabellengte'] ?? '',
-                ':netwerkintegratie' => $_POST['netwerkintegratie'] ?? '',
-                ':afmetingen' => $_POST['afmetingen'] ?? '',
-                ':plafond' => $_POST['plafond'] ?? '',
-                ':wand' => $_POST['wand'] ?? '',
-                ':vloer' => $_POST['vloer'] ?? '',
-                ':beperkingen' => $_POST['beperkingen'] ?? '',
-                ':opmerkingen' => $_POST['opmerkingen'] ?? '',
-                ':id' => $ruimte_id
-            ]);
-
-            // Foto-upload toegestaan (aanvullen bij bestaande ruimte)
-            if (!empty($_FILES['files']['name'][0])) {
-            $uploadDir = __DIR__ . self::PUBLIC_UPLOAD_BASE . 'uploads/client/' . $verslag_id . '/' . $ruimte_id . '/';
-                if (!extension_loaded('fileinfo')) {
-                    $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Uploads zijn momenteel niet beschikbaar.'];
-                } elseif (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
-                    $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Uploadmap kon niet worden aangemaakt. Probeer het later opnieuw of neem contact op met uw accountmanager.'];
-                } else {
-                    $allowedMime = [
-                        'image/jpeg' => 'jpg',
-                        'image/png' => 'png',
-                        'image/gif' => 'gif',
-                        'image/webp' => 'webp',
-                    ];
-                    $maxSize = 10 * 1024 * 1024; // 10MB
-                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-
-                    for ($i = 0, $total = count($_FILES['files']['name']); $i < $total; $i++) {
-                        if ($_FILES['files']['error'][$i] !== UPLOAD_ERR_OK) {
-                            continue;
-                        }
-                        if (!is_uploaded_file($_FILES['files']['tmp_name'][$i])) {
-                            continue;
-                        }
-                        $size = $_FILES['files']['size'][$i] ?? 0;
-                        if ($size <= 0 || $size > $maxSize) {
-                            continue;
-                        }
-                        $mime = finfo_file($finfo, $_FILES['files']['tmp_name'][$i]);
-                        if (!$mime || !isset($allowedMime[$mime])) {
-                            continue;
-                        }
-
-                        $filename = bin2hex(random_bytes(16)) . '.' . $allowedMime[$mime];
-                        $destination = $uploadDir . $filename;
-                        if (!move_uploaded_file($_FILES['files']['tmp_name'][$i], $destination)) {
-                            continue;
-                        }
-
-                        $pdo->prepare("INSERT INTO foto (ruimte_id, pad, created_at) VALUES (?, ?, NOW())")
-                            ->execute([$ruimte_id, 'client/' . $verslag_id . '/' . $ruimte_id . '/' . $filename]);
-                    }
-
-                    finfo_close($finfo);
-                }
-            }
-        }
-
-        // markeer laatste wijziging (client)
-        $pdo->prepare("UPDATE client_access SET last_modified_at = NOW() WHERE bezoekverslag_id = ?")
-            ->execute([$verslag_id]);
-
-        // --- E-mailnotificatie naar accountmanager ---
+        $this->markClientModification($pdo, $verslag_id);
         $this->sendUpdateNotification($pdo, $verslag_id);
 
         header(self::REDIRECT_CLIENT_VIEW_PREFIX . $verslag_id);
         exit;
     }
 
+    private function ensureClientEditAccess(int $verslagId): void {
+        if (empty($_SESSION['client_id'])) {
+            header(self::REDIRECT_CLIENT_LOGIN);
+            exit;
+        }
+        if ($verslagId !== (int)($_SESSION['bezoekverslag_id'] ?? 0)) {
+            die("<div style='padding:20px;font-family:sans-serif;color:#b00;'>Geen toegang tot dit verslag.</div>");
+        }
+        if (empty($_SESSION['client_can_edit'])) {
+            die("<div style='padding:20px;font-family:sans-serif;color:#b00;'>Je hebt alleen-lezen rechten.</div>");
+        }
+    }
+
+    private function updateClientPreferences(PDO $pdo, int $verslagId): void {
+        if (($_POST['action'] ?? '') !== 'save_wensen_installatie') {
+            return;
+        }
+
+        $stmt = $pdo->prepare("UPDATE bezoekverslag SET wensen = :wensen, eisen = :eisen, installatie = :installatie, last_modified_at = NOW(), last_modified_by = 'client' WHERE id = :id");
+        $stmt->execute([
+            ':wensen' => $_POST['wensen'] ?? '',
+            ':eisen' => $_POST['eisen'] ?? '',
+            ':installatie' => $_POST['installatie'] ?? '',
+            ':id' => $verslagId
+        ]);
+    }
+
+    private function updateClientRoom(PDO $pdo, int $verslagId): void {
+        if (($_POST['action'] ?? '') !== 'save_ruimte') {
+            return;
+        }
+
+        $ruimteId = (int)($_POST['ruimte_id'] ?? 0);
+        $this->ensureRuimteBelongsToVerslag($pdo, $ruimteId, $verslagId);
+        $this->persistClientRoom($pdo, $ruimteId);
+        $this->handleClientUploads($pdo, $verslagId, $ruimteId);
+    }
+
+    private function ensureRuimteBelongsToVerslag(PDO $pdo, int $ruimteId, int $verslagId): void {
+        $chk = $pdo->prepare('SELECT id FROM ruimte WHERE id = ? AND verslag_id = ?');
+        $chk->execute([$ruimteId, $verslagId]);
+        if (!$chk->fetchColumn()) {
+            die("<div style='padding:20px;font-family:sans-serif;color:#b00;'>Ongeldige ruimte.</div>");
+        }
+    }
+
+    private function persistClientRoom(PDO $pdo, int $ruimteId): void {
+        $stmt = $pdo->prepare('
+            UPDATE ruimte SET
+                etage = :etage,
+                bereikbaarheid = :bereikbaarheid,
+                lift = :lift,
+                afm_lift = :afm_lift,
+                voorzieningen = :voorzieningen,
+                bereikb_voorzieningen = :bereikb_voorzieningen,
+                kabellengte = :kabellengte,
+                netwerkintegratie = :netwerkintegratie,
+                afmetingen = :afmetingen,
+                plafond = :plafond,
+                wand = :wand,
+                vloer = :vloer,
+                beperkingen = :beperkingen,
+                opmerkingen = :opmerkingen
+            WHERE id = :id
+        ');
+        $stmt->execute([
+            ':etage' => $_POST['etage'] ?? '',
+            ':bereikbaarheid' => $_POST['bereikbaarheid'] ?? '',
+            ':lift' => $_POST['lift'] ?? '',
+            ':afm_lift' => $_POST['afm_lift'] ?? '',
+            ':voorzieningen' => $_POST['voorzieningen'] ?? '',
+            ':bereikb_voorzieningen' => $_POST['bereikb_voorzieningen'] ?? '',
+            ':kabellengte' => $_POST['kabellengte'] ?? '',
+            ':netwerkintegratie' => $_POST['netwerkintegratie'] ?? '',
+            ':afmetingen' => $_POST['afmetingen'] ?? '',
+            ':plafond' => $_POST['plafond'] ?? '',
+            ':wand' => $_POST['wand'] ?? '',
+            ':vloer' => $_POST['vloer'] ?? '',
+            ':beperkingen' => $_POST['beperkingen'] ?? '',
+            ':opmerkingen' => $_POST['opmerkingen'] ?? '',
+            ':id' => $ruimteId
+        ]);
+    }
+
+    private function handleClientUploads(PDO $pdo, int $verslagId, int $ruimteId): void {
+        if (empty($_FILES['files']['name'][0])) {
+            return;
+        }
+
+        $uploadDir = __DIR__ . self::PUBLIC_UPLOAD_BASE . 'uploads/client/' . $verslagId . '/' . $ruimteId . '/';
+        if (!extension_loaded('fileinfo')) {
+            $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Uploads zijn momenteel niet beschikbaar.'];
+            return;
+        }
+        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
+            $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Uploadmap kon niet worden aangemaakt. Probeer het later opnieuw of neem contact op met uw accountmanager.'];
+            return;
+        }
+
+        $allowedMime = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp',
+        ];
+        $maxSize = 10 * 1024 * 1024;
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+
+        for ($i = 0, $total = count($_FILES['files']['name']); $i < $total; $i++) {
+            if (($_FILES['files']['error'][$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+                continue;
+            }
+            if (!is_uploaded_file($_FILES['files']['tmp_name'][$i] ?? '')) {
+                continue;
+            }
+
+            $size = $_FILES['files']['size'][$i] ?? 0;
+            if ($size <= 0 || $size > $maxSize) {
+                continue;
+            }
+
+            $mime = finfo_file($finfo, $_FILES['files']['tmp_name'][$i]);
+            if (!$mime || !isset($allowedMime[$mime])) {
+                continue;
+            }
+
+            $filename = bin2hex(random_bytes(16)) . '.' . $allowedMime[$mime];
+            $destination = $uploadDir . $filename;
+            if (!move_uploaded_file($_FILES['files']['tmp_name'][$i], $destination)) {
+                continue;
+            }
+
+            $pdo->prepare('INSERT INTO foto (ruimte_id, pad, created_at) VALUES (?, ?, NOW())')
+                ->execute([$ruimteId, 'client/' . $verslagId . '/' . $ruimteId . '/' . $filename]);
+        }
+
+        finfo_close($finfo);
+    }
+
+    private function markClientModification(PDO $pdo, int $verslagId): void {
+        $pdo->prepare('UPDATE client_access SET last_modified_at = NOW() WHERE bezoekverslag_id = ?')
+            ->execute([$verslagId]);
+    }
     /**
      * Verstuurt een notificatie naar de accountmanager na een update door de klant.
      */
@@ -291,3 +326,5 @@ class ClientController {
         }
     }
 }
+
+

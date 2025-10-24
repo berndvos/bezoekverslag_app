@@ -159,7 +159,9 @@ class RuimteController {
         $stmt = $pdo->prepare("SELECT verslag_id FROM ruimte WHERE id=?");
         $stmt->execute([$id]);
         $ruimte = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$ruimte) die("Ruimte niet gevonden.");
+        if (!$ruimte) {
+            die("Ruimte niet gevonden.");
+        }
 
         $verslag_id = $ruimte['verslag_id'];
 

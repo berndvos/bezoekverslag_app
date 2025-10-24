@@ -98,204 +98,239 @@ class BezoekverslagController {
         requireLogin();
         $pdo = Database::getConnection();
 
-        // Haal eerst het verslag op om de eigenaar te controleren
+        $verslagOwner = $this->fetchVerslagOwner($pdo, (int)$id);
+        $isOwner = $this->isVerslagOwner($verslagOwner);
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->handleBewerkPost((int)$id, $pdo, $verslagOwner, $isOwner);
+        }
+
+        $this->ensureVerslagEditable((int)$id);
+
+        $viewData = $this->prepareBewerkViewData($pdo, (int)$id, $isOwner, $verslagOwner);
+        extract($viewData);
+
+        include __DIR__ . '/../views/verslag_detail.php';
+    }
+
+    private function fetchVerslagOwner(PDO $pdo, int $id): ?array {
         $stmt = $pdo->prepare("SELECT created_by FROM bezoekverslag WHERE id = ?");
         $stmt->execute([$id]);
-        $verslagOwner = $stmt->fetch(PDO::FETCH_ASSOC);
-        $isOwner = ($verslagOwner && $verslagOwner['created_by'] == $_SESSION['user_id']) || isAdmin();
+        $owner = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Als er een POST request is, sla de data op
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            require_valid_csrf_token($_POST['csrf_token'] ?? null);
-            header('Content-Type: application/json');
-            
-            // Toegangscontrole voor POST requests: alleen de eigenaar of een admin mag opslaan.
-            if (!$verslagOwner || (!isAdmin() && $verslagOwner['created_by'] != $_SESSION['user_id'])) {
-                echo json_encode([
-                    'success' => false, 
-                    'message' => 'Opslaan mislukt: U heeft geen rechten om dit verslag te bewerken omdat u niet de eigenaar bent.'
-                ]);
-                exit;
-            }
-            
-            // --- Samenwerking beheren ---
-            if (isset($_POST['manage_collaboration'])) {
-                if (!$isOwner) {
-                    echo json_encode(['success' => false, 'message' => 'Alleen de eigenaar kan collaborators beheren.']);
-                    exit;
-                }
-                if (isset($_POST['add_collaborator'])) {
-                    $collabId = (int)$_POST['collaborator_id'];
-                    $stmt = $pdo->prepare("INSERT IGNORE INTO verslag_collaborators (verslag_id, user_id, granted_by) VALUES (?, ?, ?)");
-                    $stmt->execute([$id, $collabId, $_SESSION['user_id']]);
+        return $owner ?: null;
+    }
 
-                    // E-mailnotificatie versturen
-                    $stmtUser = $pdo->prepare("SELECT email, fullname FROM users WHERE id = ?");
-                    $stmtUser->execute([$collabId]);
-                    $collaborator = $stmtUser->fetch(PDO::FETCH_ASSOC);
-
-                    $stmtVerslag = $pdo->prepare("SELECT projecttitel FROM bezoekverslag WHERE id = ?");
-                    $stmtVerslag->execute([$id]);
-                    $verslagInfo = $stmtVerslag->fetch(PDO::FETCH_ASSOC);
-
-                    if ($collaborator && $verslagInfo) {
-                        $adminController = new AdminController();
-                        $mailSettings = $adminController->getSmtpSettings();
-                        $adminController->sendCollaborationEmail($collaborator, $verslagInfo, $id, $_SESSION['fullname'], $mailSettings);
-                    }
-
-                    $response = ['success' => true, 'message' => 'Collega toegevoegd. De pagina wordt herladen.'];
-                } elseif (isset($_POST['remove_collaborator'])) {
-                    $collabId = (int)$_POST['collaborator_id'];
-                    $stmt = $pdo->prepare("DELETE FROM verslag_collaborators WHERE verslag_id = ? AND user_id = ?");
-                    $stmt->execute([$id, $collabId]);
-                    $response = ['success' => true, 'message' => 'Collega verwijderd. De pagina wordt herladen.'];
-                } else {
-                    $response = ['success' => false, 'message' => 'Ongeldige actie.'];
-                }
-                
-                echo json_encode($response);
-                exit;
-            }
-
-            $response = ['success' => false, 'message' => 'Onbekende fout opgetreden.'];
-
-            // --- Klantportaal Toegang Beheren ---
-            if (isset($_POST['manage_client_access'])) {
-                $contactEmail = $_POST['contact_email'] ?? '';
-                $contactNaam = $_POST['contact_naam'] ?? 'Klant';
-                $clientAccessEnabled = isset($_POST['client_access_enabled']);
-                $clientCanEdit = isset($_POST['client_can_edit']);
-
-                $stmtClient = $pdo->prepare("SELECT id FROM client_access WHERE bezoekverslag_id = ?");
-                $stmtClient->execute([$id]);
-                $existingClientAccess = $stmtClient->fetch();
-
-                // Logica voor het aan- of uitzetten van de toegang
-                if ($clientAccessEnabled) {
-                    if (!$contactEmail || !filter_var($contactEmail, FILTER_VALIDATE_EMAIL)) {
-                        $response = ['success' => false, 'message' => 'Een geldig e-mailadres voor de contactpersoon is vereist om portaaltoegang te geven.'];
-                    } elseif (!$existingClientAccess) {
-                        // --- NIEUW ACCOUNT ---
-                        // Maak nieuw client account aan
-                        $password = bin2hex(random_bytes(8)); // Genereer een 16-karakter wachtwoord
-                        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
-                        $stmt = $pdo->prepare("INSERT INTO client_access (bezoekverslag_id, email, password, fullname, can_edit, expires_at) VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 14 DAY))");
-                        $stmt->execute([$id, $contactEmail, $hashedPassword, $contactNaam, $clientCanEdit]);
-
-                        $response = ['success' => true, 'message' => "Klantaccount aangemaakt. Het eenmalige wachtwoord is: $password. Geef dit door aan de klant. De toegang is 14 dagen geldig."];
-                    } else {
-                        // --- BESTAAND ACCOUNT UPDATEN ---
-                        // Update bestaand account
-                        $stmt = $pdo->prepare("UPDATE client_access SET email = ?, fullname = ?, can_edit = ?, expires_at = DATE_ADD(NOW(), INTERVAL 14 DAY) WHERE bezoekverslag_id = ?");
-                        $stmt->execute([$contactEmail, $contactNaam, $clientCanEdit, $id]);
-                        $response = ['success' => true, 'message' => 'Klanttoegang bijgewerkt. De toegang is opnieuw 14 dagen geldig.'];
-                    }
-                } elseif ($existingClientAccess) {
-                    // --- TOEGANG INTREKKEN ---
-                    // Verwijder toegang
-                    $pdo->prepare("DELETE FROM client_access WHERE bezoekverslag_id = ?")->execute([$id]);
-                    $response = ['success' => true, 'message' => 'Klanttoegang is ingetrokken.'];
-                }
-
-                // Stop hier na het afhandelen van de klanttoegang
-                echo json_encode($response);
-                exit;
-            }
-
-            // --- Projectbestanden uploaden ---
-            if (isset($_POST['upload_project_files'])) {
-                if (!empty($_FILES['project_files']['name'][0])) {
-                    $result = $this->handleProjectFileUploads($pdo, $id);
-                    $message = "{$result['success']} bestand(en) succesvol geüpload.";
-                    if (!empty($result['errors'])) {
-                        $message .= "<br>Fouten: <ul><li>" . implode("</li><li>", $result['errors']) . "</li></ul>";
-                        $response = ['success' => false, 'message' => $message];
-                    } else {
-                        $response = ['success' => true, 'message' => $message . ' De pagina wordt herladen.'];
-                    }
-                } else {
-                    $response = ['success' => false, 'message' => 'Geen bestanden geselecteerd om te uploaden.'];
-                    echo json_encode($response);
-                    exit;
-                }
-                echo json_encode($response);
-                exit;
-            }
-
-            // --- Individueel projectbestand verwijderen ---
-            if (isset($_POST['delete_project_file'])) {
-                $fileId = (int)($_POST['file_id'] ?? 0);
-                if ($this->deleteProjectFile($fileId, $id)) {
-                    $response = ['success' => true, 'message' => 'Bestand verwijderd.'];
-                } else {
-                    $response = ['success' => false, 'message' => 'Kon het bestand niet verwijderen.'];
-                }
-                echo json_encode($response);
-                exit;
-            }
-
-            // --- Hybride Opslagactie ---
-            if (isset($_POST['save_section'])) {
-                $section = $_POST['save_section'];
-
-                // Bepaal welke velden geüpdatet moeten worden
-                $fieldsToUpdate = [];
-                // Verzamel altijd alle velden uit alle secties
-                foreach ($this->sectionFields as $sectionName => $fields) {
-                    $fieldsToUpdate = array_merge($fieldsToUpdate, $fields);
-                }
-
-                if (empty($fieldsToUpdate)) {
-                    $response = ['success' => false, 'message' => 'Ongeldige sectie opgegeven.'];
-                } else {
-                    $data = [];
-                    $setClauses = [];
-
-                    foreach ($fieldsToUpdate as $field) {
-                        $setClauses[] = "`$field` = :$field";
-                        // Speciale behandeling voor velden die NULL kunnen zijn (zoals datums)
-                        if (in_array($field, ['installatiedatum', 'opleverdatum', 'gewenste_offertedatum'])) {
-                            $data[$field] = empty($_POST[$field]) ? null : $_POST[$field];
-                        }
-                        else {
-                            $data[$field] = $_POST[$field] ?? null;
-                        }
-                    }
-
-                    // Voeg altijd de metadata-updates toe
-                    $setClauses[] = "pdf_up_to_date = 0";
-                    $setClauses[] = "last_modified_at = NOW()";
-                    $setClauses[] = "last_modified_by = :user";
-                    $data['user'] = $_SESSION['fullname'] ?? 'Onbekend';
-                    $data['id'] = $id;
-
-                    $sql = "UPDATE bezoekverslag SET " . implode(', ', $setClauses) . " WHERE id = :id";
-                    $stmt = $pdo->prepare($sql);
-                    
-                    try {
-                        $stmt->execute($data);
-                        $response = ['success' => true, 'message' => 'Alle gegevens succesvol opgeslagen.'];
-                    } catch (PDOException $e) {
-                        // Vang databasefouten af voor betere feedback
-                        error_log("Save error: " . $e->getMessage()); // Log de daadwerkelijke fout
-                        $response = ['success' => false, 'message' => 'Databasefout bij opslaan: ' . $e->getMessage()];
-                    }
-                }
-            }
-
-            echo json_encode($response);
-            exit;
+    private function isVerslagOwner(?array $verslagOwner): bool {
+        if (!$verslagOwner) {
+            return false;
         }
 
-        // Toegangscontrole voor het laden van de pagina (GET request)
-        if (!canEditVerslag($id)) {
-            $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'U heeft geen rechten om dit verslag te bewerken.'];
-            header(self::REDIRECT_DASHBOARD);
-            exit;
+        $currentUserId = (int)($_SESSION['user_id'] ?? 0);
+        return isAdmin() || (int)$verslagOwner['created_by'] === $currentUserId;
+    }
+
+    private function handleBewerkPost(int $id, PDO $pdo, ?array $verslagOwner, bool $isOwner): void {
+        require_valid_csrf_token($_POST['csrf_token'] ?? null);
+        header('Content-Type: application/json');
+
+        if (!$this->userMayEditVerslag($verslagOwner)) {
+            $this->jsonExit([
+                'success' => false,
+                'message' => 'Opslaan mislukt: U heeft geen rechten om dit verslag te bewerken omdat u niet de eigenaar bent.'
+            ]);
         }
 
+        if (isset($_POST['manage_collaboration'])) {
+            $this->jsonExit($this->handleCollaborationUpdate($id, $pdo, $isOwner));
+        }
+
+        if (isset($_POST['manage_client_access'])) {
+            $this->jsonExit($this->handleClientAccessUpdate($id, $pdo));
+        }
+
+        if (isset($_POST['upload_project_files'])) {
+            $this->jsonExit($this->handleProjectFileUploadAction($pdo, $id));
+        }
+
+        if (isset($_POST['delete_project_file'])) {
+            $this->jsonExit($this->handleProjectFileDeletion($id));
+        }
+
+        if (isset($_POST['save_section'])) {
+            $this->jsonExit($this->handleSectionSave($pdo, $id));
+        }
+
+        $this->jsonExit(['success' => false, 'message' => 'Geen geldige actie ontvangen.']);
+    }
+
+    private function userMayEditVerslag(?array $verslagOwner): bool {
+        if (!$verslagOwner) {
+            return false;
+        }
+
+        if (isAdmin()) {
+            return true;
+        }
+
+        return (int)($verslagOwner['created_by'] ?? 0) === (int)($_SESSION['user_id'] ?? 0);
+    }
+
+    private function handleCollaborationUpdate(int $id, PDO $pdo, bool $isOwner): array {
+        if (!$isOwner) {
+            return ['success' => false, 'message' => 'Alleen de eigenaar kan collaborators beheren.'];
+        }
+
+        if (isset($_POST['add_collaborator'])) {
+            $collabId = (int)($_POST['collaborator_id'] ?? 0);
+            if ($collabId <= 0) {
+                return ['success' => false, 'message' => 'Ongeldige gebruiker geselecteerd.'];
+            }
+
+            $stmt = $pdo->prepare("INSERT IGNORE INTO verslag_collaborators (verslag_id, user_id, granted_by) VALUES (?, ?, ?)");
+            $stmt->execute([$id, $collabId, $_SESSION['user_id']]);
+
+            $stmtUser = $pdo->prepare("SELECT email, fullname FROM users WHERE id = ?");
+            $stmtUser->execute([$collabId]);
+            $collaborator = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+            $stmtVerslag = $pdo->prepare("SELECT projecttitel FROM bezoekverslag WHERE id = ?");
+            $stmtVerslag->execute([$id]);
+            $verslagInfo = $stmtVerslag->fetch(PDO::FETCH_ASSOC);
+
+            if ($collaborator && $verslagInfo) {
+                $adminController = new AdminController();
+                $mailSettings = $adminController->getSmtpSettings();
+                $adminController->sendCollaborationEmail($collaborator, $verslagInfo, $id, $_SESSION['fullname'], $mailSettings);
+            }
+
+            return ['success' => true, 'message' => 'Collega toegevoegd. De pagina wordt herladen.'];
+        }
+
+        if (isset($_POST['remove_collaborator'])) {
+            $collabId = (int)($_POST['collaborator_id'] ?? 0);
+            $stmt = $pdo->prepare("DELETE FROM verslag_collaborators WHERE verslag_id = ? AND user_id = ?");
+            $stmt->execute([$id, $collabId]);
+
+            return ['success' => true, 'message' => 'Collega verwijderd. De pagina wordt herladen.'];
+        }
+
+        return ['success' => false, 'message' => 'Ongeldige actie.'];
+    }
+
+    private function handleClientAccessUpdate(int $id, PDO $pdo): array {
+        $contactEmail = $_POST['contact_email'] ?? '';
+        $contactNaam = $_POST['contact_naam'] ?? 'Klant';
+        $clientAccessEnabled = isset($_POST['client_access_enabled']);
+        $clientCanEdit = isset($_POST['client_can_edit']);
+
+        $stmtClient = $pdo->prepare("SELECT id FROM client_access WHERE bezoekverslag_id = ?");
+        $stmtClient->execute([$id]);
+        $existingClientAccess = $stmtClient->fetch();
+
+        if ($clientAccessEnabled) {
+            if (!$contactEmail || !filter_var($contactEmail, FILTER_VALIDATE_EMAIL)) {
+                return ['success' => false, 'message' => 'Een geldig e-mailadres voor de contactpersoon is vereist om portaaltoegang te geven.'];
+            }
+
+            if (!$existingClientAccess) {
+                $password = bin2hex(random_bytes(8));
+                $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+                $stmt = $pdo->prepare("INSERT INTO client_access (bezoekverslag_id, email, password, fullname, can_edit, expires_at) VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 14 DAY))");
+                $stmt->execute([$id, $contactEmail, $hashedPassword, $contactNaam, $clientCanEdit]);
+
+                return ['success' => true, 'message' => "Klantaccount aangemaakt. Het eenmalige wachtwoord is: $password. Geef dit door aan de klant. De toegang is 14 dagen geldig."];
+            }
+
+            $stmt = $pdo->prepare("UPDATE client_access SET email = ?, fullname = ?, can_edit = ?, expires_at = DATE_ADD(NOW(), INTERVAL 14 DAY) WHERE bezoekverslag_id = ?");
+            $stmt->execute([$contactEmail, $contactNaam, $clientCanEdit, $id]);
+
+            return ['success' => true, 'message' => 'Klanttoegang bijgewerkt. De toegang is opnieuw 14 dagen geldig.'];
+        }
+
+        if ($existingClientAccess) {
+            $pdo->prepare("DELETE FROM client_access WHERE bezoekverslag_id = ?")->execute([$id]);
+            return ['success' => true, 'message' => 'Klanttoegang is ingetrokken.'];
+        }
+
+        return ['success' => false, 'message' => 'Geen bestaande klanttoegang gevonden.'];
+    }
+
+    private function handleProjectFileUploadAction(PDO $pdo, int $id): array {
+        if (empty($_FILES['project_files']['name'][0])) {
+            return ['success' => false, 'message' => 'Geen bestanden geselecteerd om te uploaden.'];
+        }
+
+        $result = $this->handleProjectFileUploads($pdo, $id);
+        $message = "{$result['success']} bestand(en) succesvol geupload.";
+
+        if (!empty($result['errors'])) {
+            $message .= "<br>Fouten: <ul><li>" . implode("</li><li>", $result['errors']) . "</li></ul>";
+            return ['success' => false, 'message' => $message];
+        }
+
+        return ['success' => true, 'message' => $message . ' De pagina wordt herladen.'];
+    }
+
+    private function handleProjectFileDeletion(int $verslagId): array {
+        $fileId = (int)($_POST['file_id'] ?? 0);
+        if ($this->deleteProjectFile($fileId, $verslagId)) {
+            return ['success' => true, 'message' => 'Bestand verwijderd.'];
+        }
+
+        return ['success' => false, 'message' => 'Kon het bestand niet verwijderen.'];
+    }
+
+    private function handleSectionSave(PDO $pdo, int $id): array {
+        $fieldsToUpdate = [];
+        foreach ($this->sectionFields as $fields) {
+            $fieldsToUpdate = array_merge($fieldsToUpdate, $fields);
+        }
+
+        if (empty($fieldsToUpdate)) {
+            return ['success' => false, 'message' => 'Ongeldige sectie opgegeven.'];
+        }
+
+        $setClauses = [];
+        $data = ['user' => $_SESSION['fullname'] ?? 'Onbekend', 'id' => $id];
+
+        foreach ($fieldsToUpdate as $field) {
+            $setClauses[] = "`$field` = :$field";
+            if (in_array($field, ['installatiedatum', 'opleverdatum', 'gewenste_offertedatum'], true)) {
+                $data[$field] = empty($_POST[$field]) ? null : $_POST[$field];
+                continue;
+            }
+            $data[$field] = $_POST[$field] ?? null;
+        }
+
+        $setClauses[] = "pdf_up_to_date = 0";
+        $setClauses[] = "last_modified_at = NOW()";
+        $setClauses[] = "last_modified_by = :user";
+
+        $sql = "UPDATE bezoekverslag SET " . implode(', ', $setClauses) . " WHERE id = :id";
+        $stmt = $pdo->prepare($sql);
+
+        try {
+            $stmt->execute($data);
+            return ['success' => true, 'message' => 'Alle gegevens succesvol opgeslagen.'];
+        } catch (PDOException $e) {
+            error_log("Save error: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Databasefout bij opslaan: ' . $e->getMessage()];
+        }
+    }
+
+    private function ensureVerslagEditable(int $id): void {
+        if (canEditVerslag($id)) {
+            return;
+        }
+
+        $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'U heeft geen rechten om dit verslag te bewerken.'];
+        header(self::REDIRECT_DASHBOARD);
+        exit;
+    }
+
+    private function prepareBewerkViewData(PDO $pdo, int $id, bool $isOwner, ?array $verslagOwner): array {
         $stmt = $pdo->prepare("SELECT * FROM bezoekverslag WHERE id = ?");
         $stmt->execute([$id]);
         $verslag = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -308,36 +343,60 @@ class BezoekverslagController {
         $stmt->execute([$id]);
         $ruimtes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Haal client access data op
         $stmtClient = $pdo->prepare("SELECT * FROM client_access WHERE bezoekverslag_id = ?");
         $stmtClient->execute([$id]);
         $clientAccess = $stmtClient->fetch(PDO::FETCH_ASSOC);
 
-        // Haal projectbestanden op
         $stmtBestanden = $pdo->prepare("SELECT id, bestandsnaam FROM project_bestanden WHERE verslag_id = ? ORDER BY bestandsnaam ASC");
         $stmtBestanden->execute([$id]);
         $projectBestanden = $stmtBestanden->fetchAll(PDO::FETCH_ASSOC);
 
-        // Haal collaborators en mogelijke collega's op (alleen voor eigenaar/admin)
-        $collaborators = [];
-        $colleagues = [];
-        if ($isOwner) {
-            $stmtCollabs = $pdo->prepare("SELECT u.id, u.fullname, u.email FROM verslag_collaborators vc JOIN users u ON vc.user_id = u.id WHERE vc.verslag_id = ?");
-            $stmtCollabs->execute([$id]);
-            $collaborators = $stmtCollabs->fetchAll(PDO::FETCH_ASSOC);
-            $collaboratorIds = array_column($collaborators, 'id');
-            $excludeIds = array_merge([$verslagOwner['created_by']], $collaboratorIds);
-            $placeholders = implode(',', array_fill(0, count($excludeIds), '?'));
+        [$collaborators, $colleagues] = $this->loadCollaborationViewData($pdo, $id, $isOwner, $verslagOwner);
 
-            $stmtColleagues = $pdo->prepare("SELECT id, fullname FROM users WHERE id NOT IN ($placeholders) AND role != 'viewer'");
-            $stmtColleagues->execute($excludeIds);
-            $colleagues = $stmtColleagues->fetchAll(PDO::FETCH_ASSOC);
-        }
-
-
-        include __DIR__ . '/../views/verslag_detail.php';
+        return [
+            'verslag' => $verslag,
+            'ruimtes' => $ruimtes,
+            'clientAccess' => $clientAccess,
+            'projectBestanden' => $projectBestanden,
+            'collaborators' => $collaborators,
+            'colleagues' => $colleagues,
+            'isOwner' => $isOwner
+        ];
     }
 
+    private function loadCollaborationViewData(PDO $pdo, int $id, bool $isOwner, ?array $verslagOwner): array {
+        if (!$isOwner) {
+            return [[], []];
+        }
+
+        $stmtCollabs = $pdo->prepare("SELECT u.id, u.fullname, u.email FROM verslag_collaborators vc JOIN users u ON vc.user_id = u.id WHERE vc.verslag_id = ?");
+        $stmtCollabs->execute([$id]);
+        $collaborators = $stmtCollabs->fetchAll(PDO::FETCH_ASSOC);
+
+        $ownerId = $verslagOwner['created_by'] ?? null;
+        $excludeIds = array_filter(
+            array_merge([$ownerId], array_column($collaborators, 'id')),
+            function ($value) {
+                return $value !== null;
+            }
+        );
+
+        if (empty($excludeIds)) {
+            return [$collaborators, []];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($excludeIds), '?'));
+        $stmtColleagues = $pdo->prepare("SELECT id, fullname FROM users WHERE id NOT IN ($placeholders) AND role != 'viewer'");
+        $stmtColleagues->execute($excludeIds);
+        $colleagues = $stmtColleagues->fetchAll(PDO::FETCH_ASSOC);
+
+        return [$collaborators, $colleagues];
+    }
+
+    private function jsonExit(array $payload): void {
+        echo json_encode($payload);
+        exit;
+    }
     /* ================= VERWIJDEREN ================= */
     public function delete($id) {
         requireRole(['admin', 'poweruser', 'accountmanager']);
@@ -369,30 +428,58 @@ class BezoekverslagController {
     public function generatePdf($id) {
         requireLogin();
 
-        // Controleer of de GD-extensie is ingeschakeld, nodig voor afbeeldingen
-        if (!extension_loaded('gd')) {
-            $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Fout: De GD PHP-extensie is niet ingeschakeld op de server. Deze is nodig voor het verwerken van afbeeldingen in de PDF.'];
-            header(self::REDIRECT_EDIT_PREFIX . $id);
-            exit;
-        }
+        $this->ensureGdExtensionAvailable((int)$id);
 
         $pdo = Database::getConnection();
+        $verslag = $this->fetchVerslagForPdf($pdo, (int)$id);
 
-        // Haal verslag data op
-        $stmt = $pdo->prepare("
+        $errors = $this->validatePdfData($verslag);
+        if (!empty($errors)) {
+            $this->redirectWithPdfErrors((int)$id, $errors);
+        }
+
+        $pdfDir = $this->ensurePdfDirectory();
+        $this->streamExistingPdfIfAvailable($verslag, $pdfDir);
+        $this->removeExistingPdf($verslag, $pdfDir);
+
+        [$ruimtes, $projectBestanden] = $this->loadPdfRelatedData($pdo, (int)$id);
+        $html = $this->renderPdfTemplate($verslag, $ruimtes, $projectBestanden);
+        $dompdf = $this->createPdfGenerator($html);
+
+        $pdfFilename = $this->storePdfOutput($dompdf, $verslag, $pdfDir);
+        $this->updatePdfMetadata($pdo, (int)$id, $verslag, $pdfFilename);
+
+        $dompdf->stream($pdfFilename, ['Attachment' => 0]);
+    }
+
+    private function ensureGdExtensionAvailable(int $verslagId): void {
+        if (extension_loaded('gd')) {
+            return;
+        }
+
+        $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Fout: De GD PHP-extensie is niet ingeschakeld op de server. Deze is nodig voor het verwerken van afbeeldingen in de PDF.'];
+        header(self::REDIRECT_EDIT_PREFIX . $verslagId);
+        exit;
+    }
+
+    private function fetchVerslagForPdf(PDO $pdo, int $id): array {
+        $stmt = $pdo->prepare('
             SELECT b.*, u.fullname AS accountmanager_naam
             FROM bezoekverslag b
             LEFT JOIN users u ON b.created_by = u.id
             WHERE b.id = ?
-        ");
+        ');
         $stmt->execute([$id]);
         $verslag = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$verslag) {
-            die("Verslag niet gevonden.");
+            die('Verslag niet gevonden.');
         }
 
-        // --- VALIDATIE VOOR PDF GENERATIE ---
+        return $verslag;
+    }
+
+    private function validatePdfData(array $verslag): array {
         $errors = [];
         if (($verslag['installatie_adres_afwijkend'] ?? 'Nee') === 'Ja') {
             if (empty($verslag['installatie_adres_straat'])) {
@@ -405,6 +492,7 @@ class BezoekverslagController {
                 $errors[] = 'Afwijkend installatieadres: "Plaats" is verplicht.';
             }
         }
+
         if (($verslag['cp_locatie_afwijkend'] ?? 'Nee') === 'Ja') {
             if (empty($verslag['cp_locatie_naam'])) {
                 $errors[] = 'Contactpersoon op locatie: "Naam" is verplicht.';
@@ -414,94 +502,118 @@ class BezoekverslagController {
             }
         }
 
-        if (!empty($errors)) {
-            $errorHtml = '<ul><li>' . implode('</li><li>', $errors) . '</li></ul>';
-            $_SESSION['flash_message'] = ['type' => 'danger', 'text' => '<strong>PDF niet gegenereerd.</strong> De volgende velden zijn verplicht:<br>' . $errorHtml];
-            header(self::REDIRECT_EDIT_PREFIX . $id);
-            exit;
-        }
+        return $errors;
+    }
 
+    private function redirectWithPdfErrors(int $id, array $errors): void {
+        $errorHtml = '<ul><li>' . implode('</li><li>', $errors) . '</li></ul>';
+        $_SESSION['flash_message'] = ['type' => 'danger', 'text' => '<strong>PDF niet gegenereerd.</strong> De volgende velden zijn verplicht:<br>' . $errorHtml];
+        header(self::REDIRECT_EDIT_PREFIX . $id);
+        exit;
+    }
+
+    private function ensurePdfDirectory(): string {
         $pdfDir = __DIR__ . '/../../storage/pdfs/';
         if (!is_dir($pdfDir)) {
             mkdir($pdfDir, 0777, true);
         }
 
-        // Als PDF up-to-date is en bestaat, toon de bestaande
-        if (!empty($verslag['pdf_up_to_date']) && !empty($verslag['pdf_path']) && file_exists($pdfDir . $verslag['pdf_path'])) {
-            header('Content-Type: application/pdf');
-            header('Content-Disposition: inline; filename="' . basename($verslag['pdf_path']) . '"');
-            readfile($pdfDir . $verslag['pdf_path']);
-            exit;
+        return $pdfDir;
+    }
+
+    private function streamExistingPdfIfAvailable(array $verslag, string $pdfDir): void {
+        if (empty($verslag['pdf_up_to_date']) || empty($verslag['pdf_path'])) {
+            return;
         }
 
-        // --- Verwijder de oude PDF als die bestaat ---
-        if (!empty($verslag['pdf_path']) && file_exists($pdfDir . $verslag['pdf_path'])) {
-            @unlink($pdfDir . $verslag['pdf_path']);
+        $fullPath = $pdfDir . $verslag['pdf_path'];
+        if (!file_exists($fullPath)) {
+            return;
         }
 
-        // --- Genereer een nieuwe PDF ---
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="' . basename($verslag['pdf_path']) . '"');
+        readfile($fullPath);
+        exit;
+    }
 
-        // Haal gerelateerde ruimtes op
-        $stmt = $pdo->prepare("SELECT * FROM ruimte WHERE verslag_id = ?");
+    private function removeExistingPdf(array $verslag, string $pdfDir): void {
+        if (empty($verslag['pdf_path'])) {
+            return;
+        }
+
+        $fullPath = $pdfDir . $verslag['pdf_path'];
+        if (file_exists($fullPath)) {
+            @unlink($fullPath);
+        }
+    }
+
+    private function loadPdfRelatedData(PDO $pdo, int $id): array {
+        $stmt = $pdo->prepare('SELECT * FROM ruimte WHERE verslag_id = ?');
         $stmt->execute([$id]);
         $ruimtes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Haal foto's op voor elke ruimte
-        $fotoStmt = $pdo->prepare("SELECT pad FROM foto WHERE ruimte_id = ?");
-        foreach ($ruimtes as $key => $ruimte) {
+        $fotoStmt = $pdo->prepare('SELECT pad FROM foto WHERE ruimte_id = ?');
+        foreach ($ruimtes as $index => $ruimte) {
             $fotoStmt->execute([$ruimte['id']]);
-            $ruimtes[$key]['fotos'] = $fotoStmt->fetchAll(PDO::FETCH_ASSOC);
+            $ruimtes[$index]['fotos'] = $fotoStmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
-        // Haal projectbestanden op
-        $stmtBestanden = $pdo->prepare("SELECT bestandsnaam FROM project_bestanden WHERE verslag_id = ? ORDER BY bestandsnaam ASC");
+        $stmtBestanden = $pdo->prepare('SELECT bestandsnaam FROM project_bestanden WHERE verslag_id = ? ORDER BY bestandsnaam ASC');
         $stmtBestanden->execute([$id]);
         $projectBestanden = $stmtBestanden->fetchAll(PDO::FETCH_ASSOC);
 
-        // Start output buffering om de HTML op te vangen
-        ob_start();
-        include __DIR__ . '/../views/pdf_template.php';
-        $html = ob_get_clean();
+        return [$ruimtes, $projectBestanden];
+    }
 
-        // Configureer Dompdf
+    private function renderPdfTemplate(array $verslag, array $ruimtes, array $projectBestanden): string {
+        ob_start();
+        $data = compact('verslag', 'ruimtes', 'projectBestanden');
+        extract($data);
+        include __DIR__ . '/../views/pdf_template.php';
+        return (string)ob_get_clean();
+    }
+
+    private function createPdfGenerator(string $html): Dompdf {
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
         $options->set('isRemoteEnabled', true);
+
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html);
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
 
-        // Sla de PDF op
-        $newVersion = (int)($verslag['pdf_version'] ?? 0) + 1;
-        // Maak veilige en nette bestandsnamen met spaties en koppeltekens
-        $sanitize = function ($value) {
+        return $dompdf;
+    }
+
+    private function storePdfOutput(Dompdf $dompdf, array $verslag, string $pdfDir): string {
+        $sanitize = static function ($value) {
             $value = (string)($value ?? '');
-            // Verwijder ongeldige tekens, behoud letters/cijfers/spaties/_/-
             $value = preg_replace('/[^\pL\pN _-]+/u', ' ', $value);
-            // Vervang meerdere spaties door enkele spatie
             $value = preg_replace('/\s+/', ' ', $value);
-            // Trim ongewenste tekens aan randen
-            $value = trim($value, " .-_");
+            $value = trim($value, ' .-_');
             return $value !== '' ? $value : 'naamloos';
         };
+
         $safeKlantnaam = $sanitize($verslag['klantnaam'] ?? '');
         $safeProjecttitel = $sanitize($verslag['projecttitel'] ?? '');
         $pdfFilename = sprintf('Bezoekverslag - %s - %s.pdf', $safeKlantnaam, $safeProjecttitel);
+
         file_put_contents($pdfDir . $pdfFilename, $dompdf->output());
 
-        // Update de database
-        $stmt = $pdo->prepare("
-            UPDATE bezoekverslag 
-            SET pdf_version = ?, pdf_path = ?, pdf_up_to_date = 1, pdf_generated_at = NOW() 
-            WHERE id = ?
-        ");
-        $stmt->execute([$newVersion, $pdfFilename, $id]);
-
-        // Toon de zojuist gegenereerde PDF in de browser
-        $dompdf->stream($pdfFilename, ["Attachment" => 0]);
+        return $pdfFilename;
     }
 
+    private function updatePdfMetadata(PDO $pdo, int $id, array $verslag, string $pdfFilename): void {
+        $newVersion = (int)($verslag['pdf_version'] ?? 0) + 1;
+        $stmt = $pdo->prepare('
+            UPDATE bezoekverslag
+            SET pdf_version = ?, pdf_path = ?, pdf_up_to_date = 1, pdf_generated_at = NOW()
+            WHERE id = ?
+        ');
+        $stmt->execute([$newVersion, $pdfFilename, $id]);
+    }
     /* ================= CLIENT PASSWORD RESET ================= */
     public function resetClientPassword($id) {
         requireRole(['admin', 'poweruser', 'accountmanager']);
@@ -722,3 +834,5 @@ class BezoekverslagController {
         $stmt->execute([$verslag_id]);
     }
 }
+
+
