@@ -19,19 +19,19 @@ class AdminSettingsService
     public function getBrandingSettings(): array
     {
         $configFile = $this->configDir . DIRECTORY_SEPARATOR . 'branding.php';
-        return \file_exists($configFile) ? require $configFile : [];
+        return \file_exists($configFile) ? require_once $configFile : [];
     }
 
     public function getSmtpSettings(): array
     {
         $configFile = $this->configDir . DIRECTORY_SEPARATOR . 'mail_settings.php';
-        return \file_exists($configFile) ? require $configFile : [];
+        return \file_exists($configFile) ? require_once $configFile : [];
     }
 
     public function getEmailTemplates(): array
     {
         $configFile = $this->configDir . DIRECTORY_SEPARATOR . 'email_templates.php';
-        return \file_exists($configFile) ? require $configFile : [];
+        return \file_exists($configFile) ? require_once $configFile : [];
     }
 
     public function saveBrandingSettings(array $input): AdminServiceResponse
