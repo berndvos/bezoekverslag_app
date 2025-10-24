@@ -2,11 +2,11 @@
 
 namespace App\Config;
 
-final class Branding
+final class MailSettings
 {
     public static function get(): array
     {
-         = __DIR__ . DIRECTORY_SEPARATOR . 'branding.php';
+         = __DIR__ . DIRECTORY_SEPARATOR . 'mail_settings.php';
         return \file_exists() ? require  : [];
     }
 }

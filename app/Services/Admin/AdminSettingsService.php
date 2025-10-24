@@ -1,8 +1,11 @@
-<?php
+﻿<?php
 
-namespace App\Services\Admin;
+namespace App\\Services\\Admin;
 
-use App\Services\Admin\AdminServiceResponse;
+use App\\Config\\Branding;
+use App\\Config\\EmailTemplates;
+use App\\Config\\MailSettings;
+use App\\Services\\Admin\\AdminServiceResponse;
 
 class AdminSettingsService
 {
@@ -20,19 +23,22 @@ class AdminSettingsService
     public function getBrandingSettings(): array
     {
         $configFile = $this->configDir . DIRECTORY_SEPARATOR . 'branding.php';
-        return \file_exists($configFile) ? require_once $configFile : [];
+        // via App\Config class
+        return Branding::get();
     }
 
     public function getSmtpSettings(): array
     {
         $configFile = $this->configDir . DIRECTORY_SEPARATOR . 'mail_settings.php';
-        return \file_exists($configFile) ? require_once $configFile : [];
+        // via App\Config class
+        return MailSettings::get();
     }
 
     public function getEmailTemplates(): array
     {
         $configFile = $this->configDir . DIRECTORY_SEPARATOR . 'email_templates.php';
-        return \file_exists($configFile) ? require_once $configFile : [];
+        // via App\Config class
+        return EmailTemplates::get();
     }
 
     public function saveBrandingSettings(array $input): AdminServiceResponse
@@ -134,3 +140,6 @@ class AdminSettingsService
         return new AdminServiceResponse(true, 'E-mail sjablonen opgeslagen.', 'success');
     }
 }
+
+
+
