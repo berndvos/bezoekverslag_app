@@ -1,4 +1,6 @@
 <?php
+use App\Config\Database;
+
 /**
  * Algemene authenticatie helpers. Bevat guards om dubbele declaraties te voorkomen.
  */

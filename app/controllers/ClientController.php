@@ -1,8 +1,12 @@
 <?php
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../models/Bezoekverslag.php';
-require_once __DIR__ . '/../models/Ruimte.php';
-require_once __DIR__ . '/../../vendor/autoload.php';
+
+namespace App\Controllers;
+
+use App\Config\Database;
+use PDO;
+use App\Models\Bezoekverslag;
+use App\Models\Ruimte;
+
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -12,7 +16,7 @@ use PHPMailer\PHPMailer\Exception;
  * -----------------
  * Beperkte toegang voor klant (contactpersoon) tot een specifiek bezoekverslag.
  * - Login op basis van client_access (email + wachtwoord)
- * - Kan slechts één verslag zien (id in sessie)
+ * - Kan slechts Ã©Ã©n verslag zien (id in sessie)
  * - Optioneel bewerken van: Wensen & eisen / Installatie / bestaande Ruimtes
  * - Geen nieuwe ruimtes, geen PDF-generatie
  */
@@ -68,7 +72,7 @@ class ClientController {
         exit;
     }
 
-    /** VIEW (publiek) – id = verslag_id */
+    /** VIEW (publiek) â€“ id = verslag_id */
     public function view($verslag_id) {
         if (empty($_SESSION['client_id'])) {
             header(self::REDIRECT_CLIENT_LOGIN);
@@ -97,8 +101,8 @@ class ClientController {
         include __DIR__ . '/../views/client_view.php';
     }
 
+    /** UPDATE (publiek) â€“ beperkte updates door klant */
     /** UPDATE (publiek) – beperkte updates door klant */
-    /** UPDATE (publiek) � beperkte updates door klant */
     public function update($verslag_id) {
         $verslag_id = (int)$verslag_id;
         $this->ensureClientEditAccess($verslag_id);
@@ -356,6 +360,7 @@ class ClientController {
         }
     }
 }
+
 
 
 

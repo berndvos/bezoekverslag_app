@@ -1,6 +1,8 @@
 <?php
 
-require_once __DIR__ . '/../helpers/auth_helpers.php';
+namespace App\Controllers;
+
+
 
 class ApiController {
     private const HEADER_JSON = 'Content-Type: application/json';
@@ -189,3 +191,6 @@ class ApiController {
         exit;
     }
 }
+
+
+

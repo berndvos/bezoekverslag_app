@@ -1,7 +1,9 @@
 <?php
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../helpers/log_helpers.php';
-require_once __DIR__ . '/../../vendor/autoload.php';
+
+namespace App\Controllers;
+
+use App\Config\Database;
+use PDO;
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -386,7 +388,7 @@ class AuthController {
             session_start();
         }
 
-        // Als er geen gebruiker is die moet verifiëren, terug naar login
+        // Als er geen gebruiker is die moet verifiÃ«ren, terug naar login
         if (empty($_SESSION['pending_2fa_user_id'])) {
             header('Location: ?page=login');
             exit;

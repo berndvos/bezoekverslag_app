@@ -1,10 +1,14 @@
 <?php
+
+namespace App\Core;
+
+use App\Controllers\BezoekverslagController;
+use App\Controllers\RuimteController;
+use App\Controllers\UploadController;
+
 class Router {
     public static function route($default = 'dashboard') {
         $page = $_GET['page'] ?? $default;
-        require_once __DIR__ . '/../app/controllers/BezoekverslagController.php';
-        require_once __DIR__ . '/../app/controllers/RuimteController.php';
-        require_once __DIR__ . '/../app/controllers/UploadController.php';
         $controller = new BezoekverslagController();
         switch ($page) {
             case 'dashboard': $controller->index(); break;

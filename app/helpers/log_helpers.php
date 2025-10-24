@@ -1,4 +1,6 @@
 <?php
+use App\Config\Database;
+
 
 function log_action($action, $details = '') {
     if (session_status() === PHP_SESSION_NONE) {

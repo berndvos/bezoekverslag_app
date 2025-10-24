@@ -1,7 +1,10 @@
 <?php
-require_once __DIR__ . '/../models/Ruimte.php';
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../helpers/auth_helpers.php';
+
+namespace App\Controllers;
+
+use App\Config\Database;
+use PDO;
+use App\Models\Ruimte;
 
 class RuimteController {
     private const HEADER_JSON = 'Content-Type: application/json';

@@ -1,7 +1,13 @@
 <?php
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../helpers/auth_helpers.php';
-// require_once __DIR__ . '/AdminController.php'; // Removed, as it's not best practice and already loaded by index.php
+
+namespace App\Controllers;
+
+use App\Config\Database;
+use App\Config\Version;
+use Exception;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use ZipArchive;
 
 class UpdateController {
 
@@ -35,8 +41,7 @@ class UpdateController {
                 exit;
             }
 
-            // Gebruik require_once om de waarde uit version.php te laden (bestand returnt de versie string)
-            $currentVersionRaw = trim(require_once self::ROOT_PATH . 'config/version.php');
+            $currentVersionRaw = trim(Version::CURRENT);
             $currentVersion = $this->normalizeVersion($currentVersionRaw);
 
             $latestVersionData = $this->getLatestVersionFromGitHub();
@@ -182,7 +187,7 @@ class UpdateController {
 
             echo json_encode([
                 'success' => true,
-                'message' => "Update succesvol geïnstalleerd! De pagina wordt over 5 seconden herladen.",
+                'message' => "Update succesvol geÃ¯nstalleerd! De pagina wordt over 5 seconden herladen.",
                 'new_version' => $latestVersionData['version']
             ]);
 

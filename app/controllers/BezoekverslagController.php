@@ -1,7 +1,10 @@
 <?php
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../../vendor/autoload.php';
 
+namespace App\Controllers;
+
+use App\Config\Database;
+use PDO;
+use PDOException;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
@@ -721,7 +724,7 @@ class BezoekverslagController {
                         $errors[] = "Bestand '{$originalName}' is te groot.";
                         break;
                     case UPLOAD_ERR_PARTIAL:
-                        $errors[] = "Bestand '{$originalName}' is slechts gedeeltelijk geüpload.";
+                        $errors[] = "Bestand '{$originalName}' is slechts gedeeltelijk geÃ¼pload.";
                         break;
                     default:
                         $errors[] = "Onbekende fout bij uploaden van '{$originalName}' (Error code: {$errorCode}).";
@@ -834,5 +837,6 @@ class BezoekverslagController {
         $stmt->execute([$verslag_id]);
     }
 }
+
 
 

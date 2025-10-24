@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // --- Sessiebeveiliging ---
 // Forceer het gebruik van cookies voor sessies, niet via URL's.
 ini_set('session.use_only_cookies', 1);
@@ -13,18 +13,59 @@ ini_set('session.use_strict_mode', 1);
 
 session_start();
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../app/helpers/log_helpers.php';
-require_once __DIR__ . '/../app/helpers/auth_helpers.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
-// Autoload controllers
-require_once __DIR__ . '/../app/controllers/BezoekverslagController.php';
-require_once __DIR__ . '/../app/controllers/AdminController.php';
-require_once __DIR__ . '/../app/controllers/AuthController.php';
-require_once __DIR__ . '/../app/controllers/ClientController.php';
-require_once __DIR__ . '/../app/controllers/RuimteController.php';
-require_once __DIR__ . '/../app/controllers/ApiController.php';
-require_once __DIR__ . '/../app/controllers/UpdateController.php';
+// Basis logging voor fouten wanneer serverlogs niet beschikbaar zijn.
+$logDirectory = __DIR__ . '/../storage/logs';
+$logFile = $logDirectory . '/runtime.log';
+if (!is_dir($logDirectory) && !mkdir($logDirectory, 0775, true) && !is_dir($logDirectory)) {
+    // Geef in noodgevallen een simpele melding terug zonder directory-informatie te lekken.
+    http_response_code(500);
+    exit('Applicatiefout: logmap kan niet worden aangemaakt.');
+}
+
+ini_set('log_errors', '1');
+ini_set('error_log', $logFile);
+
+$writeLog = static function (string $level, string $message, string $file, int $line) use ($logFile): void {
+    $entry = sprintf(
+        "[%s] %s: %s in %s on line %d%s",
+        date('Y-m-d H:i:s'),
+        strtoupper($level),
+        $message,
+        $file,
+        $line,
+        PHP_EOL
+    );
+    file_put_contents($logFile, $entry, FILE_APPEND);
+};
+
+set_error_handler(static function (int $severity, string $message, string $file, int $line) use ($writeLog): bool {
+    $writeLog('error', $message, $file, $line);
+    return false; // Laat PHP de standaard error-handler ook nog uitvoeren.
+});
+
+set_exception_handler(static function (\Throwable $throwable) use ($writeLog): void {
+    $writeLog('exception', $throwable->getMessage(), $throwable->getFile(), $throwable->getLine());
+    http_response_code(500);
+    echo 'Er is een fout opgetreden. Controleer de runtime-log in storage/logs.';
+});
+
+register_shutdown_function(static function () use ($writeLog): void {
+    $error = error_get_last();
+    if ($error !== null) {
+        $writeLog('shutdown', $error['message'], $error['file'], $error['line']);
+    }
+});
+
+use App\Controllers\AdminController;
+use App\Controllers\ApiController;
+use App\Controllers\AuthController;
+use App\Controllers\BezoekverslagController;
+use App\Controllers\ClientController;
+use App\Controllers\RuimteController;
+use App\Controllers\UpdateController;
+use App\Config\Database;
 
 const HEADER_LOCATION = 'Location: ';
 const ROUTE_DASHBOARD = '?page=dashboard';
@@ -236,6 +277,8 @@ switch ($page) {
         header(HEADER_LOCATION . ROUTE_DASHBOARD);
         exit;
 }
+
+
 
 
 

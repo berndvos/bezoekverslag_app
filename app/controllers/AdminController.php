@@ -1,11 +1,13 @@
 <?php
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../helpers/log_helpers.php';
-require_once __DIR__ . '/../helpers/auth_helpers.php';
-require_once __DIR__ . '/../../vendor/autoload.php';
+
+namespace App\Controllers;
+
+use App\Config\Database;
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use PDO;
+use PDOException;
 
 
 class AdminController {
@@ -1015,7 +1017,7 @@ class AdminController {
             $_SESSION['role'] = $originalUser['role'];
             
             // Log de actie nu de originele sessie hersteld is
-            log_action('impersonate_stop', "Admin '{$_SESSION['email']}' heeft de overname van '{$impersonatedEmail}' beÃ«indigd.");
+            log_action('impersonate_stop', "Admin '{$_SESSION['email']}' heeft de overname van '{$impersonatedEmail}' beÃƒÂ«indigd.");
         }
         header(self::REDIRECT_ADMIN);
         exit;
