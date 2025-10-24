@@ -35,8 +35,8 @@ class UpdateController {
                 exit;
             }
 
-            // Gebruik require om de waarde uit version.php te laden (bestand returnt de versie string)
-            $currentVersionRaw = trim(require self::ROOT_PATH . 'config/version.php');
+            // Gebruik require_once om de waarde uit version.php te laden (bestand returnt de versie string)
+            $currentVersionRaw = trim(require_once self::ROOT_PATH . 'config/version.php');
             $currentVersion = $this->normalizeVersion($currentVersionRaw);
 
             $latestVersionData = $this->getLatestVersionFromGitHub();
