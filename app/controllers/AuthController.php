@@ -72,89 +72,21 @@ class AuthController {
 
     /** LOGIN **/
     public function login() {
-        // Als al ingelogd
-        // Stuur alleen door als we NIET een gebruiker overnemen
-        if (!empty($_SESSION['user_id']) && empty($_SESSION['original_user'])) {
-            header(self::REDIRECT_DASHBOARD);
-            exit;
+        if ($this->shouldRedirectAuthenticatedSession()) {
+            $this->redirectToDashboard();
         }
 
-        // Check remember-me cookie, maar niet als we een gebruiker overnemen
-        if (empty($_SESSION['user_id']) && !empty($_COOKIE[self::REMEMBER_COOKIE_NAME]) && empty($_SESSION['original_user'])) {
-            $pdo = Database::getConnection();
-            $cookieToken = $_COOKIE[self::REMEMBER_COOKIE_NAME];
-            $user = null;
-            if (preg_match('/^[a-f0-9]{64}$/', $cookieToken)) {
-                $hashed = hash('sha256', $cookieToken);
-                $stmt = $pdo->prepare("SELECT * FROM users WHERE remember_token = ?");
-                $stmt->execute([$hashed]);
-                $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-                // Legacy ondersteuning: tokens die nog niet gehasht waren
-                if (!$user) {
-                    $stmtLegacy = $pdo->prepare("SELECT * FROM users WHERE remember_token = ?");
-                    $stmtLegacy->execute([$cookieToken]);
-                    $legacyUser = $stmtLegacy->fetch(PDO::FETCH_ASSOC);
-                    if ($legacyUser) {
-                        $pdo->prepare("UPDATE users SET remember_token = ? WHERE id = ?")->execute([$hashed, $legacyUser['id']]);
-                        $user = $legacyUser;
-                    }
-                }
-            }
-            if ($user) {
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['email'] = $user['email'];
-                $_SESSION['fullname'] = $user['fullname'];
-                $_SESSION['role'] = $user['role'];
-                header(self::REDIRECT_DASHBOARD);
-                exit;
-            }
-
-            // Ongeldig token? Cookie opruimen om brute-force te voorkomen.
-            $this->clearRememberMeCookie();
+        $pdo = Database::getConnection();
+        if ($this->attemptRememberMeLogin($pdo)) {
+            return;
         }
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $error = '';
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             require_valid_csrf_token($_POST['csrf_token'] ?? null);
-            $pdo = Database::getConnection();
-            $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
-            $stmt->execute([$_POST['email']]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            // Stap 1: Controleer e-mail en wachtwoord
-            if ($user && ($user['status'] ?? 'pending') !== 'active') {
-                $error = "Uw account is nog niet geactiveerd of is geblokkeerd. Neem contact op met de beheerder.";
-                log_action('login_failed_inactive', "Mislukte inlogpoging voor inactieve gebruiker '{$_POST['email']}'.");
-                include __DIR__ . '/../views/login.php';
+            [$success, $error] = $this->processLoginSubmission($pdo, $_POST);
+            if ($success) {
                 return;
-            }
-            if ($user && password_verify($_POST['password'], $user['password'])) {
-                // 2FA is nu uitgeschakeld. Log de gebruiker direct in.
-                session_regenerate_id(true); // Voorkom session fixation
-
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['email'] = $user['email'];
-                $_SESSION['fullname'] = $user['fullname'];
-                $_SESSION['role'] = $user['role'];
-
-                $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?")->execute([$user['id']]);
-
-                // Remember-me cookie instellen indien aangevinkt
-                if (!empty($_POST['remember'])) {
-                    [$tokenPlain, $tokenHash] = $this->generateTokenPair();
-                    $this->setRememberMeCookie($tokenPlain);
-                    $pdo->prepare("UPDATE users SET remember_token=? WHERE id=?")->execute([$tokenHash, $user['id']]);
-                } else {
-                    $this->clearRememberMeCookie();
-                    $pdo->prepare("UPDATE users SET remember_token=NULL WHERE id=?")->execute([$user['id']]);
-                }
-
-                log_action('login_success', "Gebruiker '{$user['email']}' is ingelogd.");
-                header(self::REDIRECT_DASHBOARD);
-                exit;
-            } else {
-                $error = "Ongeldig e-mailadres of wachtwoord.";
-                log_action('login_failed', "Mislukte inlogpoging voor '{$_POST['email']}'.");
             }
         }
 
@@ -182,41 +114,11 @@ class AuthController {
     public function register() {
         $error = '';
         $success = '';
+        $pdo = Database::getConnection();
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             require_valid_csrf_token($_POST['csrf_token'] ?? null);
-            $pdo = Database::getConnection();
-            $fullname = trim($_POST['fullname'] ?? '');
-            $email = trim($_POST['email'] ?? '');
-            $password = $_POST['password'] ?? '';
-            $password_confirm = $_POST['password_confirm'] ?? '';
-
-            if (!$fullname || !filter_var($email, FILTER_VALIDATE_EMAIL) || !$password) {
-                $error = 'Vul alle velden correct in.';
-            } elseif ($password !== $password_confirm) {
-                $error = 'De wachtwoorden komen niet overeen.';
-            } elseif (strlen($password) < 8) {
-                $error = 'Wachtwoord moet minimaal 8 tekens bevatten.';
-            } else {
-                // Controleer of e-mail al bestaat
-                $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-                $stmt->execute([$email]);
-                if ($stmt->fetch()) {
-                    $error = 'Dit e-mailadres is al in gebruik.';
-                } else {
-                    $password_hash = password_hash($password, PASSWORD_DEFAULT);
-                    $stmt = $pdo->prepare("INSERT INTO users (fullname, email, password, role, status, created_at) VALUES (?, ?, ?, 'viewer', 'pending', NOW())");
-                    if ($stmt->execute([$fullname, $email, $password_hash])) {
-                        $newUserId = $pdo->lastInsertId();
-                        log_action('user_registered', "Nieuwe gebruiker '{$email}' heeft zich geregistreerd (ID: {$newUserId}).");
-                        $this->sendAdminRegistrationNotification($fullname, $email, $newUserId);
-                        $success = 'Uw registratie is ontvangen. Een beheerder zal uw account beoordelen. U ontvangt een e-mail wanneer uw account is goedgekeurd.';
-                    } else {
-                        $error = 'Er is een fout opgetreden bij het aanmaken van uw account.';
-                        log_action('registration_failed', "Databasefout bij registratie voor '{$email}'.");
-                    }
-                }
-            }
+            [$error, $success] = $this->handleRegistrationSubmission($pdo, $_POST);
         }
 
         include __DIR__ . '/../views/register.php';
@@ -225,26 +127,13 @@ class AuthController {
 
     /** WACHTWOORD VERGETEN **/
     public function forgot() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $error = '';
+        $msg = '';
+        $pdo = Database::getConnection();
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             require_valid_csrf_token($_POST['csrf_token'] ?? null);
-            $pdo = Database::getConnection();
-            $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
-            $stmt->execute([$_POST['email']]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($user) {
-                [$plainToken, $hashedToken] = $this->generateTokenPair();
-                $pdo->prepare("UPDATE users SET reset_token=?, reset_expires=DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE id=?")
-                    ->execute([$hashedToken, $user['id']]);
-
-                if ($this->sendPasswordResetEmail($user, $plainToken)) {
-                    $msg = "Er is een e-mail verstuurd met instructies voor het resetten van je wachtwoord.";
-                } else {
-                    $error = "Er ging iets mis bij het versturen van de e-mail.";
-                }
-            } else {
-                $error = "Geen gebruiker gevonden met dit e-mailadres.";
-            }
+            [$error, $msg] = $this->handleForgotPasswordSubmission($pdo, $_POST);
         }
 
         include __DIR__ . '/../views/forgot.php';
@@ -254,45 +143,241 @@ class AuthController {
     public function reset() {
         $pdo = Database::getConnection();
         $token = $_GET['token'] ?? '';
+        $error = '';
+        $msg = '';
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             require_valid_csrf_token($_POST['csrf_token'] ?? null);
             $token = $_POST['token'] ?? '';
-            $hashedToken = preg_match('/^[a-f0-9]{64}$/', $token) ? hash('sha256', $token) : '';
-            $stmt = $pdo->prepare("SELECT * FROM users WHERE reset_token=? AND reset_expires > NOW()");
-            $stmt->execute([$hashedToken]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$user && $token !== '') {
-                $stmtLegacy = $pdo->prepare("SELECT * FROM users WHERE reset_token=? AND reset_expires > NOW()");
-                $stmtLegacy->execute([$token]);
-                $legacyUser = $stmtLegacy->fetch(PDO::FETCH_ASSOC);
-                if ($legacyUser) {
-                    if ($hashedToken !== '') {
-                        $pdo->prepare("UPDATE users SET reset_token=? WHERE id=?")->execute([$hashedToken, $legacyUser['id']]);
-                    }
-                    $user = $legacyUser;
-                }
-            }
-
-            $password = $_POST['password'] ?? '';
-            $passwordRepeat = $_POST['password_repeat'] ?? '';
-
-            if (!$user) {
-                $error = "Ongeldige of verlopen resetlink.";
-            } elseif ($password !== $passwordRepeat) {
-                $error = "De ingevoerde wachtwoorden komen niet overeen.";
-            } elseif (strlen($password) < 8) {
-                $error = "Het wachtwoord moet minimaal 8 tekens lang zijn.";
-            } else {
-                $newHash = password_hash($password, PASSWORD_DEFAULT);
-                $pdo->prepare("UPDATE users SET password=?, reset_token=NULL, reset_expires=NULL WHERE id=?")
-                    ->execute([$newHash, $user['id']]);
-                $msg = "Wachtwoord succesvol gewijzigd. Je kunt nu inloggen.";
-            }
+            [$error, $msg] = $this->handleResetSubmission($pdo, $token, $_POST);
         }
 
         include __DIR__ . '/../views/reset.php';
+    }
+
+    private function shouldRedirectAuthenticatedSession(): bool {
+        return !empty($_SESSION['user_id']) && empty($_SESSION['original_user']);
+    }
+
+    private function redirectToDashboard(): void {
+        header(self::REDIRECT_DASHBOARD);
+        exit;
+    }
+
+    private function attemptRememberMeLogin(\PDO $pdo): bool {
+        if (!empty($_SESSION['user_id']) || !empty($_SESSION['original_user'])) {
+            return false;
+        }
+
+        $cookieToken = $_COOKIE[self::REMEMBER_COOKIE_NAME] ?? '';
+        if ($cookieToken === '') {
+            return false;
+        }
+
+        if (!preg_match('/^[a-f0-9]{64}$/', $cookieToken)) {
+            $this->clearRememberMeCookie();
+            return false;
+        }
+
+        $hashedToken = hash('sha256', $cookieToken);
+        $user = $this->fetchUserByRememberToken($pdo, $hashedToken, $cookieToken);
+        if (!$user) {
+            $this->clearRememberMeCookie();
+            return false;
+        }
+
+        $this->finalizeSuccessfulLogin($pdo, $user, true);
+        return true;
+    }
+
+    private function processLoginSubmission(\PDO $pdo, array $data): array {
+        $email = trim($data['email'] ?? '');
+        $password = (string)($data['password'] ?? '');
+        $user = $email !== '' ? $this->fetchUserByEmail($pdo, $email) : null;
+
+        if ($this->userIsInactive($user)) {
+            log_action('login_failed_inactive', "Mislukte inlogpoging voor inactieve gebruiker '{$email}'.");
+            return [false, "Uw account is nog niet geactiveerd of is geblokkeerd. Neem contact op met de beheerder."];
+        }
+
+        if ($user && password_verify($password, $user['password'])) {
+            $remember = !empty($data['remember']);
+            $this->finalizeSuccessfulLogin($pdo, $user, $remember);
+            return [true, ''];
+        }
+
+        if ($email !== '') {
+            log_action('login_failed', "Mislukte inlogpoging voor '{$email}'.");
+        }
+
+        return [false, "Ongeldig e-mailadres of wachtwoord."];
+    }
+
+    private function finalizeSuccessfulLogin(\PDO $pdo, array $user, bool $remember): void {
+        session_regenerate_id(true);
+        $this->establishSessionFromUser($user);
+        $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?")->execute([$user['id']]);
+        $this->handleRememberMePreference($pdo, $user['id'], $remember);
+        log_action('login_success', "Gebruiker '{$user['email']}' is ingelogd.");
+        $this->redirectToDashboard();
+    }
+
+    private function establishSessionFromUser(array $user): void {
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['email'] = $user['email'];
+        $_SESSION['fullname'] = $user['fullname'];
+        $_SESSION['role'] = $user['role'];
+    }
+
+    private function handleRememberMePreference(\PDO $pdo, int $userId, bool $remember): void {
+        if ($remember) {
+            [$tokenPlain, $tokenHash] = $this->generateTokenPair();
+            $this->setRememberMeCookie($tokenPlain);
+            $pdo->prepare("UPDATE users SET remember_token=? WHERE id=?")->execute([$tokenHash, $userId]);
+            return;
+        }
+
+        $this->clearRememberMeCookie();
+        $pdo->prepare("UPDATE users SET remember_token=NULL WHERE id=?")->execute([$userId]);
+    }
+
+    private function fetchUserByEmail(\PDO $pdo, string $email): ?array {
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
+    }
+
+    private function fetchUserByRememberToken(\PDO $pdo, string $hashedToken, string $plainToken): ?array {
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE remember_token = ?");
+        $stmt->execute([$hashedToken]);
+        $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if ($user) {
+            return $user;
+        }
+
+        // Legacy ondersteuning: tokens die nog niet gehasht waren
+        $stmtLegacy = $pdo->prepare("SELECT * FROM users WHERE remember_token = ?");
+        $stmtLegacy->execute([$plainToken]);
+        $legacyUser = $stmtLegacy->fetch(\PDO::FETCH_ASSOC);
+        if ($legacyUser) {
+            $pdo->prepare("UPDATE users SET remember_token = ? WHERE id = ?")->execute([$hashedToken, $legacyUser['id']]);
+        }
+        return $legacyUser ?: null;
+    }
+
+    private function userIsInactive(?array $user): bool {
+        return $user && ($user['status'] ?? 'pending') !== 'active';
+    }
+
+    private function handleRegistrationSubmission(\PDO $pdo, array $input): array {
+        $fullname = trim($input['fullname'] ?? '');
+        $email = trim($input['email'] ?? '');
+        $password = (string)($input['password'] ?? '');
+        $passwordConfirm = (string)($input['password_confirm'] ?? '');
+
+        if (!$fullname || !filter_var($email, FILTER_VALIDATE_EMAIL) || $password === '') {
+            return ['Vul alle velden correct in.', ''];
+        }
+        if ($password !== $passwordConfirm) {
+            return ['De wachtwoorden komen niet overeen.', ''];
+        }
+        if (strlen($password) < 8) {
+            return ['Wachtwoord moet minimaal 8 tekens bevatten.', ''];
+        }
+
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        if ($stmt->fetch()) {
+            return ['Dit e-mailadres is al in gebruik.', ''];
+        }
+
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare("INSERT INTO users (fullname, email, password, role, status, created_at) VALUES (?, ?, ?, 'viewer', 'pending', NOW())");
+        if (!$stmt->execute([$fullname, $email, $passwordHash])) {
+            log_action('registration_failed', "Databasefout bij registratie voor '{$email}'.");
+            return ['Er is een fout opgetreden bij het aanmaken van uw account.', ''];
+        }
+
+        $newUserId = $pdo->lastInsertId();
+        log_action('user_registered', "Nieuwe gebruiker '{$email}' heeft zich geregistreerd (ID: {$newUserId}).");
+        $this->sendAdminRegistrationNotification($fullname, $email, $newUserId);
+
+        return ['', 'Uw registratie is ontvangen. Een beheerder zal uw account beoordelen. U ontvangt een e-mail wanneer uw account is goedgekeurd.'];
+    }
+
+    private function handleForgotPasswordSubmission(\PDO $pdo, array $input): array {
+        $email = trim($input['email'] ?? '');
+        if ($email === '') {
+            return ['Geen gebruiker gevonden met dit e-mailadres.', ''];
+        }
+
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            return ["Geen gebruiker gevonden met dit e-mailadres.", ''];
+        }
+
+        [$plainToken, $hashedToken] = $this->generateTokenPair();
+        $pdo->prepare("UPDATE users SET reset_token=?, reset_expires=DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE id=?")
+            ->execute([$hashedToken, $user['id']]);
+
+        if ($this->sendPasswordResetEmail($user, $plainToken)) {
+            return ['', "Er is een e-mail verstuurd met instructies voor het resetten van je wachtwoord."];
+        }
+
+        return ["Er ging iets mis bij het versturen van de e-mail.", ''];
+    }
+
+    private function handleResetSubmission(\PDO $pdo, string $token, array $input): array {
+        $password = (string)($input['password'] ?? '');
+        $passwordRepeat = (string)($input['password_repeat'] ?? '');
+        $hashedToken = preg_match('/^[a-f0-9]{64}$/', $token) ? hash('sha256', $token) : '';
+
+        $user = $this->fetchUserByResetToken($pdo, $token, $hashedToken);
+        if (!$user) {
+            return ["Ongeldige of verlopen resetlink.", ''];
+        }
+
+        if ($password !== $passwordRepeat) {
+            return ["De ingevoerde wachtwoorden komen niet overeen.", ''];
+        }
+
+        if (strlen($password) < 8) {
+            return ["Het wachtwoord moet minimaal 8 tekens lang zijn.", ''];
+        }
+
+        $newHash = password_hash($password, PASSWORD_DEFAULT);
+        $pdo->prepare("UPDATE users SET password=?, reset_token=NULL, reset_expires=NULL WHERE id=?")
+            ->execute([$newHash, $user['id']]);
+
+        return ['', "Wachtwoord succesvol gewijzigd. Je kunt nu inloggen."];
+    }
+
+    private function fetchUserByResetToken(\PDO $pdo, string $plainToken, string $hashedToken): ?array {
+        if ($hashedToken !== '') {
+            $stmt = $pdo->prepare("SELECT * FROM users WHERE reset_token=? AND reset_expires > NOW()");
+            $stmt->execute([$hashedToken]);
+            $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if ($user) {
+                return $user;
+            }
+        }
+
+        if ($plainToken === '') {
+            return null;
+        }
+
+        $stmtLegacy = $pdo->prepare("SELECT * FROM users WHERE reset_token=? AND reset_expires > NOW()");
+        $stmtLegacy->execute([$plainToken]);
+        $legacyUser = $stmtLegacy->fetch(\PDO::FETCH_ASSOC);
+
+        if ($legacyUser && $hashedToken !== '') {
+            $pdo->prepare("UPDATE users SET reset_token=? WHERE id=?")->execute([$hashedToken, $legacyUser['id']]);
+        }
+
+        return $legacyUser ?: null;
     }
 
     /** 2FA VERIFICATIEPAGINA **/
