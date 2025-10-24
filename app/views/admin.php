@@ -1,4 +1,4 @@
-<?php include 'layout/header.php'; ?>
+﻿<?php include_once 'layout/header.php'; ?>
 <?php $adminDateFormat = 'd-m-Y H:i'; ?>
 
 <style>
@@ -827,5 +827,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-<?php include 'layout/footer.php'; ?>
+<?php include_once 'layout/footer.php'; ?>
+
 

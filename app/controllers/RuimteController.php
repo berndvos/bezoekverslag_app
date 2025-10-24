@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Controllers;
 
@@ -56,7 +56,7 @@ class RuimteController {
             'stroom_extra_v2' => '',
             'stroom_afstand' => ''
         ];
-        include __DIR__ . '/../views/ruimte_form.php';
+        include_once __DIR__ . '/../views/ruimte_form.php';
     }
 
     /** Nieuwe ruimte opslaan */
@@ -150,7 +150,7 @@ class RuimteController {
         $fotos = $fotoStmt->fetchAll(PDO::FETCH_ASSOC);
 
 
-        include __DIR__ . '/../views/ruimte_form.php';
+        include_once __DIR__ . '/../views/ruimte_form.php';
     }
 
     /** Ruimte verwijderen */
@@ -306,6 +306,7 @@ class RuimteController {
         }
     }
 }
+
 
 
 

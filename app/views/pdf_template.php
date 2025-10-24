@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Helper functie om een afbeelding te comprimeren en als base64 string terug te geven.
  * Verkleint de afbeelding en past JPEG-compressie toe.
@@ -72,7 +72,7 @@ $pdfPublicPath = __DIR__ . '/../../public/';
     <meta charset="UTF-8">
     <title>Bezoekverslag: <?= htmlspecialchars($verslag['klantnaam'] ?? '') ?> - <?= htmlspecialchars($verslag['projecttitel'] ?? '') ?></title>
     <?php
-      $brandingConfig = require __DIR__ . '/../../config/branding.php';
+      $brandingConfig = require_once __DIR__ . '/../../config/branding.php';
       $primaryColor = $brandingConfig['primary_color'] ?? '#FFD200';
     ?>
     <style>
@@ -294,3 +294,4 @@ $pdfPublicPath = __DIR__ . '/../../public/';
     </main>
 </body>
 </html>
+

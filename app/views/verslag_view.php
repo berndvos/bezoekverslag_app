@@ -1,4 +1,4 @@
-<?php include 'layout/header.php'; ?>
+﻿<?php include_once 'layout/header.php'; ?>
 
 <div class="container py-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
@@ -82,4 +82,5 @@
   </div>
 </div>
 
-<?php include 'layout/footer.php'; ?>
+<?php include_once 'layout/footer.php'; ?>
+

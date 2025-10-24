@@ -1,4 +1,4 @@
-<?php include 'layout/header.php'; ?>
+﻿<?php include_once 'layout/header.php'; ?>
 
 <div class="container mt-4" style="max-width: 900px;">
     <h2><i class="bi bi-plus-circle"></i> Nieuw bezoekverslag</h2>
@@ -32,4 +32,5 @@
     </form>
 </div>
 
-<?php include 'layout/footer.php'; ?>
+<?php include_once 'layout/footer.php'; ?>
+

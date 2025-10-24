@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Controllers;
 
@@ -81,7 +81,7 @@ class BezoekverslagController {
     public function showDashboard($data) {
         requireLogin();
         extract($data); // Maakt $bezoekverslagen en $clientPortals beschikbaar in de view
-        include __DIR__ . '/../views/dashboard.php';
+        include_once __DIR__ . '/../views/dashboard.php';
     }
 
     /* ================= NIEUW / BEWERK ================= */
@@ -105,7 +105,7 @@ class BezoekverslagController {
             exit;
         }
 
-        include __DIR__ . '/../views/bezoekverslag_new.php';
+        include_once __DIR__ . '/../views/bezoekverslag_new.php';
     }
 
     public function bewerk($id) {
@@ -124,7 +124,7 @@ class BezoekverslagController {
         $viewData = $this->prepareBewerkViewData($pdo, (int)$id, $isOwner, $verslagOwner);
         extract($viewData);
 
-        include __DIR__ . '/../views/verslag_detail.php';
+        include_once __DIR__ . '/../views/verslag_detail.php';
     }
 
     private function fetchVerslagOwner(PDO $pdo, int $id): ?array {
@@ -573,7 +573,7 @@ class BezoekverslagController {
         ob_start();
         $data = compact('verslag', 'ruimtes', 'projectBestanden');
         extract($data);
-        include __DIR__ . '/../views/pdf_template.php';
+        include_once __DIR__ . '/../views/pdf_template.php';
         return (string)ob_get_clean();
     }
 
@@ -724,7 +724,7 @@ class BezoekverslagController {
                         $errors[] = "Bestand '{$originalName}' is te groot.";
                         break;
                     case UPLOAD_ERR_PARTIAL:
-                        $errors[] = "Bestand '{$originalName}' is slechts gedeeltelijk geÃ¼pload.";
+                        $errors[] = "Bestand '{$originalName}' is slechts gedeeltelijk geÃƒÂ¼pload.";
                         break;
                     default:
                         $errors[] = "Onbekende fout bij uploaden van '{$originalName}' (Error code: {$errorCode}).";
@@ -837,6 +837,7 @@ class BezoekverslagController {
         $stmt->execute([$verslag_id]);
     }
 }
+
 
 
 

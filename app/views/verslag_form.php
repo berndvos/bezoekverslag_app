@@ -1,5 +1,5 @@
-<h3>Nieuw bezoekverslag</h3>
-<?php include 'layout/header.php'; ?>
+﻿<h3>Nieuw bezoekverslag</h3>
+<?php include_once 'layout/header.php'; ?>
 <form method="post">
   <?= csrf_field() ?>
   <div class="row g-3">
@@ -21,4 +21,5 @@
     <a href="?page=dashboard" class="btn btn-outline-secondary">Annuleren</a>
   </div>
 </form>
-<?php include 'layout/footer.php'; ?>
+<?php include_once 'layout/footer.php'; ?>
+

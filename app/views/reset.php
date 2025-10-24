@@ -1,4 +1,4 @@
-<?php include 'layout/header.php'; ?>
+﻿<?php include_once 'layout/header.php'; ?>
 
 <div class="container" style="max-width: 500px; margin-top: 5rem;">
     <div class="card shadow-sm">
@@ -35,4 +35,5 @@
     </div>
 </div>
 
-<?php include 'layout/footer.php'; ?>
+<?php include_once 'layout/footer.php'; ?>
+

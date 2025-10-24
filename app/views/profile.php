@@ -1,4 +1,4 @@
-<?php include 'layout/header.php'; ?>
+﻿<?php include_once 'layout/header.php'; ?>
 
 <div class="container mt-4" style="max-width: 1000px;">
     <div class="card shadow-sm">
@@ -173,4 +173,5 @@
 
 <!-- Toast en AJAX script hier (niet getoond voor beknoptheid, maar kan gekopieerd worden van admin.php) -->
 
-<?php include 'layout/footer.php'; ?>
+<?php include_once 'layout/footer.php'; ?>
+

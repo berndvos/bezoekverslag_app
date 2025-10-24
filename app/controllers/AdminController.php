@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Controllers;
 
@@ -49,7 +49,7 @@ class AdminController {
         $smtpSettings = $this->getSmtpSettings();
         $brandingSettings = $this->getBrandingSettings();
 
-        include __DIR__ . '/../views/admin.php';
+        include_once __DIR__ . '/../views/admin.php';
     }
 
     private function ensureSessionStarted(): void {
@@ -160,12 +160,12 @@ class AdminController {
 
     private function getBrandingSettings() {
         $configFile = __DIR__ . self::BRANDING_CONFIG_RELATIVE_PATH;
-        return file_exists($configFile) ? require $configFile : [];
+        return file_exists($configFile) ? require_once $configFile : [];
     }
     // Public gemaakt zodat andere controllers het ook kunnen gebruiken
     public function getEmailTemplates() {
         $configFile = __DIR__ . '/../../config/email_templates.php';
-        return file_exists($configFile) ? require $configFile : [];
+        return file_exists($configFile) ? require_once $configFile : [];
     }
 
     /**
@@ -884,7 +884,7 @@ class AdminController {
         $clientPortals = $this->getMyClientPortals($pdo);
         $msg = '';
 
-        include __DIR__ . '/../views/profile.php';
+        include_once __DIR__ . '/../views/profile.php';
     }
 
     private function isProfileAjaxRequest(): bool {
@@ -1017,7 +1017,7 @@ class AdminController {
             $_SESSION['role'] = $originalUser['role'];
             
             // Log de actie nu de originele sessie hersteld is
-            log_action('impersonate_stop', "Admin '{$_SESSION['email']}' heeft de overname van '{$impersonatedEmail}' beÃƒÂ«indigd.");
+            log_action('impersonate_stop', "Admin '{$_SESSION['email']}' heeft de overname van '{$impersonatedEmail}' beÃƒÆ’Ã‚Â«indigd.");
         }
         header(self::REDIRECT_ADMIN);
         exit;
@@ -1049,4 +1049,5 @@ class AdminController {
         exit;
     }
 }
+
 

@@ -1,4 +1,4 @@
-<?php include 'layout/header.php'; ?>
+﻿<?php include_once 'layout/header.php'; ?>
 
 <div class="container mt-4" style="max-width: 1100px;">
   <div class="d-flex justify-content-between align-items-center mb-4">
@@ -139,4 +139,5 @@
   </div>
 </div>
 
-<?php include 'layout/footer.php'; ?>
+<?php include_once 'layout/footer.php'; ?>
+

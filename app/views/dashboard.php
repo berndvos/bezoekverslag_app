@@ -1,4 +1,4 @@
-<?php include __DIR__ . '/layout/header.php'; ?>
+﻿<?php include_once __DIR__ . '/layout/header.php'; ?>
 
 <div class="container mt-4">
     <h1 class="mb-3"><i class="bi bi-grid-1x2"></i> Dashboard</h1>
@@ -154,4 +154,5 @@
 </div>
 <?php endif; ?>
 
-<?php include __DIR__ . '/layout/footer.php'; ?>
+<?php include_once __DIR__ . '/layout/footer.php'; ?>
+

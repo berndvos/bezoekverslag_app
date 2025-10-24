@@ -1,4 +1,4 @@
-<?php include 'layout/header.php'; ?>
+﻿<?php include_once 'layout/header.php'; ?>
 
 <?php
 // Zorg dat variabelen altijd bestaan
@@ -57,7 +57,7 @@ if ($schema_version == 2) {
             <?php else: ?>
               <a href="#voorzieningen" class="list-group-item list-group-item-action">Aanwezige voorzieningen</a>
             <?php endif; ?>
-            <a href="#fotos" class="list-group-item list-group-item-action">Foto’s</a>
+            <a href="#fotos" class="list-group-item list-group-item-action">Fotoâ€™s</a>
           </div>
         </div>
       </div>
@@ -336,10 +336,10 @@ if ($schema_version == 2) {
         </div>
         <?php endif; ?>
 
-        <!-- FOTO’S -->
+        <!-- FOTOâ€™S -->
         <div id="fotos" class="section-anchor card shadow-sm mb-4">
           <div class="card-header bg-success text-white">
-            <i class="bi bi-camera"></i> Foto’s van de ruimte
+            <i class="bi bi-camera"></i> Fotoâ€™s van de ruimte
           </div>
           <div class="card-body">
             <input type="file" name="foto[]" class="form-control" accept="image/*" capture="environment" multiple onchange="previewImages(event)">
@@ -347,7 +347,7 @@ if ($schema_version == 2) {
 
             <?php if ($isEdit && !empty($fotos)): ?>
                 <div class="mt-4">
-                  <h6>Bestaande foto’s</h6>
+                  <h6>Bestaande fotoâ€™s</h6>
                   <div class="d-flex flex-wrap gap-2" id="bestaande-fotos-container">
                     <?php foreach ($fotos as $foto): ?>
                       <div class="position-relative d-inline-block" id="foto-container-<?= $foto['id'] ?>">
@@ -564,4 +564,5 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 
-<?php include 'layout/footer.php'; ?>
+<?php include_once 'layout/footer.php'; ?>
+

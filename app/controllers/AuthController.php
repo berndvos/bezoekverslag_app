@@ -92,7 +92,7 @@ class AuthController {
             }
         }
 
-        include __DIR__ . '/../views/login.php';
+        include_once __DIR__ . '/../views/login.php';
     }
 
     /** LOGOUT **/
@@ -123,7 +123,7 @@ class AuthController {
             [$error, $success] = $this->handleRegistrationSubmission($pdo, $_POST);
         }
 
-        include __DIR__ . '/../views/register.php';
+        include_once __DIR__ . '/../views/register.php';
         exit;
     }
 
@@ -138,7 +138,7 @@ class AuthController {
             [$error, $msg] = $this->handleForgotPasswordSubmission($pdo, $_POST);
         }
 
-        include __DIR__ . '/../views/forgot.php';
+        include_once __DIR__ . '/../views/forgot.php';
     }
 
     /** RESET WACHTWOORD **/
@@ -154,7 +154,7 @@ class AuthController {
             [$error, $msg] = $this->handleResetSubmission($pdo, $token, $_POST);
         }
 
-        include __DIR__ . '/../views/reset.php';
+        include_once __DIR__ . '/../views/reset.php';
     }
 
     private function shouldRedirectAuthenticatedSession(): bool {
@@ -438,7 +438,7 @@ class AuthController {
             }
         }
 
-        include __DIR__ . '/../views/2fa_verify.php';
+        include_once __DIR__ . '/../views/2fa_verify.php';
     }
 
     /** Hulpfunctie om de 2FA code e-mail te versturen */

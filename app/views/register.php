@@ -1,4 +1,4 @@
-<?php include 'layout/header_simple.php'; ?>
+﻿<?php include_once 'layout/header_simple.php'; ?>
 
 <div class="d-flex justify-content-center align-items-center" style="min-height:80vh;">
   <div class="card shadow-sm p-4 w-100" style="max-width:420px;">
@@ -42,4 +42,5 @@
   </div>
 </div>
 
-<?php include 'layout/footer.php'; ?>
+<?php include_once 'layout/footer.php'; ?>
+

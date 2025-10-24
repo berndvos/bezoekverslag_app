@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Controllers;
 
@@ -16,7 +16,7 @@ use PHPMailer\PHPMailer\Exception;
  * -----------------
  * Beperkte toegang voor klant (contactpersoon) tot een specifiek bezoekverslag.
  * - Login op basis van client_access (email + wachtwoord)
- * - Kan slechts Ã©Ã©n verslag zien (id in sessie)
+ * - Kan slechts ÃƒÂ©ÃƒÂ©n verslag zien (id in sessie)
  * - Optioneel bewerken van: Wensen & eisen / Installatie / bestaande Ruimtes
  * - Geen nieuwe ruimtes, geen PDF-generatie
  */
@@ -62,7 +62,7 @@ class ClientController {
             }
         }
 
-        include __DIR__ . '/../views/client_login.php';
+        include_once __DIR__ . '/../views/client_login.php';
     }
 
     /** LOGOUT (publiek) */
@@ -72,7 +72,7 @@ class ClientController {
         exit;
     }
 
-    /** VIEW (publiek) â€“ id = verslag_id */
+    /** VIEW (publiek) Ã¢â‚¬â€œ id = verslag_id */
     public function view($verslag_id) {
         if (empty($_SESSION['client_id'])) {
             header(self::REDIRECT_CLIENT_LOGIN);
@@ -98,11 +98,11 @@ class ClientController {
         $stmt->execute([$verslag_id]);
         $ruimtes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        include __DIR__ . '/../views/client_view.php';
+        include_once __DIR__ . '/../views/client_view.php';
     }
 
+    /** UPDATE (publiek) Ã¢â‚¬â€œ beperkte updates door klant */
     /** UPDATE (publiek) â€“ beperkte updates door klant */
-    /** UPDATE (publiek) – beperkte updates door klant */
     public function update($verslag_id) {
         $verslag_id = (int)$verslag_id;
         $this->ensureClientEditAccess($verslag_id);
@@ -324,7 +324,7 @@ class ClientController {
         // Gebruik de AdminController om de SMTP-instellingen uit .env te halen
         $adminController = new AdminController();
         $mailSettings = $adminController->getSmtpSettings();
-        $emailTemplate = require __DIR__ . '/../../config/email_templates.php';
+        $emailTemplate = require_once __DIR__ . '/../../config/email_templates.php';
 
         $mail = new PHPMailer(true);
         try {
@@ -360,6 +360,7 @@ class ClientController {
         }
     }
 }
+
 
 
 

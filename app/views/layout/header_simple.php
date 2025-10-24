@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 // app/views/layout/header_simple.php
 
-$brandingConfig = require __DIR__ . '/../../../config/branding.php';
+$brandingConfig = require_once __DIR__ . '/../../../config/branding.php';
 $primaryColor = $brandingConfig['primary_color'] ?? '#FFD200';
 $primaryColorContrast = $brandingConfig['primary_color_contrast'] ?? '#111111';
 
@@ -32,3 +32,4 @@ $customBrandingStyles = ":root { --yld-primary: {$primaryColor}; --yld-primary-c
 <body>
 
 <main class="d-flex flex-column min-vh-100">
+

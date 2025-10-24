@@ -1,4 +1,4 @@
-<?php include 'layout/header.php'; ?>
+﻿<?php include_once 'layout/header.php'; ?>
 
 <div class="d-flex justify-content-center align-items-center" style="min-height:80vh;">
   <div class="card shadow-sm p-4 w-100" style="max-width:420px;">
@@ -15,14 +15,14 @@
     <form method="post" novalidate>
         <?= csrf_field() ?>
       <div class="mb-3">
-        <label class="form-label">Verificatiecode</label>
-        <input type="text" name="2fa_code" class="form-control form-control-lg text-center" required autofocus
+        <label class="form-label" for="twofa_code">Verificatiecode</label>
+        <input type="text" id="twofa_code" name="2fa_code" class="form-control form-control-lg text-center" required autofocus
                inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code"
                placeholder="______">
       </div>
 
       <button type="submit" class="btn btn-primary w-100 mb-2">
-        <i class="bi bi-check-circle"></i> Verifiëren en Inloggen
+        <i class="bi bi-check-circle"></i> VerifiÃ«ren en Inloggen
       </button>
     </form>
 
@@ -32,4 +32,6 @@
   </div>
 </div>
 
-<?php include 'layout/footer.php'; ?>
+<?php include_once 'layout/footer.php'; ?>
+
+

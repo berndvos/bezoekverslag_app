@@ -1,8 +1,8 @@
-<?php
+﻿<?php
 // app/views/layout/header.php
 
 // Haal de branding-instellingen op
-$brandingConfig = require __DIR__ . '/../../../config/branding.php';
+$brandingConfig = require_once __DIR__ . '/../../../config/branding.php';
 $primaryColor = $brandingConfig['primary_color'] ?? '#FFD200';
 $primaryColorContrast = $brandingConfig['primary_color_contrast'] ?? '#111111';
 $logoPath = $brandingConfig['logo_path'] ?? '';
@@ -104,3 +104,4 @@ $customBrandingStyles = "
     </div>
     <?php $_SESSION['flash_message'] = null; ?>
   <?php endif; ?>
+

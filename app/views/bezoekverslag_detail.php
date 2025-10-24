@@ -1,4 +1,4 @@
-<?php include 'layout/header.php'; ?>
+﻿<?php include_once 'layout/header.php'; ?>
 
 <div class="container mt-4" style="max-width: 1200px;">
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -23,3 +23,4 @@
             <div class="col-md-6">
                 <label class="form-label">Projecttitel</label>
                 <input type="text" name="projecttitel" value="<?= htmlspecialchars($
+

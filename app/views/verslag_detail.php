@@ -1,4 +1,4 @@
-<?php include 'layout/header.php'; ?>
+﻿<?php include_once 'layout/header.php'; ?>
 
 <div class="container mt-4" style="max-width: 1200px;">
     <div class="row">
@@ -127,7 +127,7 @@
               </div>
               <div class="col-md-6">
                 <label class="form-label">Indicatief budget</label>
-                <input type="text" name="indicatief_budget" class="form-control" value="<?= htmlspecialchars($verslag['indicatief_budget'] ?? '') ?>" placeholder="Bijv. € 5.000 - € 10.000">
+                <input type="text" name="indicatief_budget" class="form-control" value="<?= htmlspecialchars($verslag['indicatief_budget'] ?? '') ?>" placeholder="Bijv. â‚¬ 5.000 - â‚¬ 10.000">
               </div>
               <!-- De velden 'situatie', 'functioneel', 'uitbreiding' worden nu beheerd via het 'Leveranciers' blok -->
               <input type="hidden" name="situatie" id="hidden_situatie" value="<?= htmlspecialchars($verslag['situatie'] ?? '') ?>">
@@ -343,7 +343,7 @@
 
             <?php if (!empty($projectBestanden)): ?>
             <hr>
-            <h6>Geüploade bestanden:</h6>
+            <h6>GeÃ¼ploade bestanden:</h6>
             <ul class="list-group">
                 <?php foreach ($projectBestanden as $bestand): ?>
                     <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -695,4 +695,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </script>
 
-<?php include 'layout/footer.php'; ?>
+<?php include_once 'layout/footer.php'; ?>
+
