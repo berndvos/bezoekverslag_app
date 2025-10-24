@@ -6,6 +6,7 @@ use App\Services\Admin\AdminServiceResponse;
 
 class AdminSettingsService
 {
+    private const CONFIG_FILE_HEADER = '<?php\nreturn ';
     private string $configDir;
     private string $uploadsDir;
 
@@ -45,7 +46,7 @@ class AdminSettingsService
             'primary_color_contrast' => $input['primary_color_contrast'] ?? '#111111',
         ];
 
-        $content = "<?php\nreturn " . \var_export($newSettings, true) . ";\n";
+        $content = self::CONFIG_FILE_HEADER . \var_export($newSettings, true) . ";\n";
 
         if (\file_put_contents($configFile, $content) === false) {
             return new AdminServiceResponse(false, 'Kon configuratiebestand niet wegschrijven. Controleer de schrijfrechten.', 'danger');
@@ -81,15 +82,15 @@ class AdminSettingsService
         $configFile = $this->configDir . DIRECTORY_SEPARATOR . 'branding.php';
         $newSettings = $currentSettings;
         $newSettings['logo_path'] = 'uploads/branding/' . $safeName;
-        $content = "<?php\nreturn " . \var_export($newSettings, true) . ";\n";
+        $content = self::CONFIG_FILE_HEADER . \var_export($newSettings, true) . ";\n";
         \file_put_contents($configFile, $content);
 
         if (function_exists('log_action')) {
             log_action('logo_updated', 'Bedrijfslogo is bijgewerkt.');
         }
 
-        return new AdminServiceResponse(true, 'Logo succesvol geupload.', 'success', [
-            'logo_path' => $newSettings['logo_path'],
+        return new AdminServiceResponse(true, 'Logo succesvol geupload.', 'success',
+            ['logo_path' => $newSettings['logo_path'],
         ]);
     }
 
@@ -124,7 +125,7 @@ class AdminSettingsService
             ],
         ];
 
-        $content = "<?php\nreturn " . \var_export($newTemplates, true) . ";\n";
+        $content = self::CONFIG_FILE_HEADER . \var_export($newTemplates, true) . ";\n";
 
         if (\file_put_contents($configFile, $content) === false) {
             return new AdminServiceResponse(false, 'Kon e-mail sjablonen niet wegschrijven. Controleer de schrijfrechten.', 'danger');
