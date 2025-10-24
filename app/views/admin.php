@@ -72,24 +72,24 @@
                       <td><?= htmlspecialchars($u['last_login'] ?? '-') ?></td>
                       <td class="text-center">
                         <!-- Bewerken knop -->
-                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editUserModal<?= $u['id'] ?>">
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editUserModal<?= $u['id'] ?>" aria-label="Bewerk gebruiker <?= htmlspecialchars($u['email'] ?? '') ?>">
                           <i class="bi bi-pencil"></i>
                         </button>
                         <!-- Overnemen knop -->
                         <?php if (isAdmin() && ($u['id'] ?? 0) !== ($_SESSION['user_id'] ?? -1)): ?>
-                          <a href="<?= csrf_url('?page=admin_impersonate&id=' . (int)$u['id']) ?>" class="btn btn-sm btn-outline-warning" title="Login overnemen">
+                          <a href="<?= csrf_url('?page=admin_impersonate&id=' . (int)$u['id']) ?>" class="btn btn-sm btn-outline-warning" title="Login overnemen" aria-label="Login overnemen voor <?= htmlspecialchars($u['email'] ?? '') ?>">
                             <i class="bi bi-person-fill-gear"></i>
                           </a>
                         <?php endif; ?>
                         <!-- Wachtwoord reset knop -->
                         <?php if (isAdmin() && ($u['id'] ?? 0) !== ($_SESSION['user_id'] ?? -1)): ?>
-                          <a href="<?= csrf_url('?page=admin_reset_password&id=' . (int)$u['id']) ?>" class="btn btn-sm btn-outline-secondary" title="Stuur wachtwoord reset" onclick="return confirm('Weet je zeker dat je een wachtwoord-reset mail wilt sturen naar deze gebruiker?')">
+                          <a href="<?= csrf_url('?page=admin_reset_password&id=' . (int)$u['id']) ?>" class="btn btn-sm btn-outline-secondary" title="Stuur wachtwoord reset" aria-label="Wachtwoord reset sturen naar <?= htmlspecialchars($u['email'] ?? '') ?>" onclick="return confirm('Weet je zeker dat je een wachtwoord-reset mail wilt sturen naar deze gebruiker?')">
                             <i class="bi bi-envelope-at"></i>
                           </a>
                         <?php endif; ?>
                         <!-- Verwijderen knop -->
                         <?php if (isAdmin() && ($u['id'] ?? 0) !== ($_SESSION['user_id'] ?? -1)): ?>
-                          <a href="<?= csrf_url('?page=admin_delete_user&id=' . (int)$u['id']) ?>" class="btn btn-sm btn-outline-danger"
+                          <a href="<?= csrf_url('?page=admin_delete_user&id=' . (int)$u['id']) ?>" class="btn btn-sm btn-outline-danger" aria-label="Verwijder gebruiker <?= htmlspecialchars($u['email'] ?? '') ?>"
                              onclick="return confirm('Weet je zeker dat je deze gebruiker wilt verwijderen?')">
                             <i class="bi bi-trash"></i>
                           </a>
@@ -110,16 +110,16 @@
                             <div class="modal-body">
                               <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
                               <div class="mb-3">
-                                <label class="form-label">Volledige naam</label>
-                                <input type="text" name="fullname" class="form-control" value="<?= htmlspecialchars($u['fullname']) ?>" required>
+                                <label class="form-label" for="edit_fullname_<?= (int)$u['id'] ?>">Volledige naam</label>
+                                <input id="edit_fullname_<?= (int)$u['id'] ?>" type="text" name="fullname" class="form-control" value="<?= htmlspecialchars($u['fullname']) ?>" required>
                               </div>
                               <div class="mb-3">
-                                <label class="form-label">E-mailadres</label>
-                                <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($u['email']) ?>" required>
+                                <label class="form-label" for="edit_email_<?= (int)$u['id'] ?>">E-mailadres</label>
+                                <input id="edit_email_<?= (int)$u['id'] ?>" type="email" name="email" class="form-control" value="<?= htmlspecialchars($u['email']) ?>" required>
                               </div>
                               <div class="mb-3">
-                                <label class="form-label">Rol</label>
-                                <select name="role" class="form-select">
+                                <label class="form-label" for="edit_role_<?= (int)$u['id'] ?>">Rol</label>
+                                <select id="edit_role_<?= (int)$u['id'] ?>" name="role" class="form-select">
                                   <option value="poweruser" <?= $u['role'] === 'poweruser' ? 'selected' : '' ?>>Poweruser</option>
                                   <option value="admin" <?= $u['role'] === 'admin' ? 'selected' : '' ?>>Admin</option>
                                   <option value="accountmanager" <?= $u['role'] === 'accountmanager' ? 'selected' : '' ?>>Accountmanager</option>
@@ -127,12 +127,12 @@
                                 </select>
                               </div>
                               <div class="mb-3">
-                                <label class="form-label">Nieuw wachtwoord (optioneel)</label>
-                                <input type="password" name="new_password" class="form-control" placeholder="Laat leeg om niet te wijzigen" minlength="8">
+                                <label class="form-label" for="edit_new_password_<?= (int)$u['id'] ?>">Nieuw wachtwoord (optioneel)</label>
+                                <input id="edit_new_password_<?= (int)$u['id'] ?>" type="password" name="new_password" class="form-control" placeholder="Laat leeg om niet te wijzigen" minlength="8">
                               </div>
                               <div class="mb-3">
-                                <label class="form-label">Herhaal nieuw wachtwoord</label>
-                                <input type="password" name="new_password_repeat" class="form-control" placeholder="Herhaal wachtwoord">
+                                <label class="form-label" for="edit_new_password_repeat_<?= (int)$u['id'] ?>">Herhaal nieuw wachtwoord</label>
+                                <input id="edit_new_password_repeat_<?= (int)$u['id'] ?>" type="password" name="new_password_repeat" class="form-control" placeholder="Herhaal wachtwoord">
                               </div>
                             </div>
                             <div class="modal-footer">
@@ -205,16 +205,16 @@
             <?= csrf_field() ?>
             <div class="row g-3">
               <div class="col-md-6">
-                <label class="form-label">Volledige naam</label>
-                <input type="text" name="fullname" class="form-control" placeholder="Bijv. Jan Jansen" required>
+                <label class="form-label" for="new_fullname">Volledige naam</label>
+                <input id="new_fullname" type="text" name="fullname" class="form-control" placeholder="Bijv. Jan Jansen" required>
               </div>
               <div class="col-md-6">
-                <label class="form-label">E-mailadres</label>
-                <input type="email" name="email" class="form-control" placeholder="naam@bedrijf.nl" required>
+                <label class="form-label" for="new_email">E-mailadres</label>
+                <input id="new_email" type="email" name="email" class="form-control" placeholder="naam@bedrijf.nl" required>
               </div>
               <div class="col-md-6">
-                <label class="form-label">Rol</label>
-                <select name="role" class="form-select" required>
+                <label class="form-label" for="new_role">Rol</label>
+                <select id="new_role" name="role" class="form-select" required>
                   <option value="">Kies rol...</option>
                   <option value="poweruser">Poweruser</option>
                   <option value="admin">Admin</option>
@@ -262,8 +262,8 @@
                       <td><?= htmlspecialchars($verslag['klantnaam']) ?></td>
                       <td><?= htmlspecialchars(date($adminDateFormat, strtotime($verslag['deleted_at']))) ?></td>
                       <td class="text-center d-flex justify-content-center gap-1">
-                        <a href="<?= csrf_url('?page=admin_restore_verslag&id=' . (int)$verslag['id']) ?>" class="btn btn-sm btn-outline-success" title="Herstellen"><i class="bi bi-arrow-counterclockwise"></i></a>
-                        <a href="<?= csrf_url('?page=admin_permanent_delete_verslag&id=' . (int)$verslag['id']) ?>" class="btn btn-sm btn-outline-danger" title="Permanent verwijderen" onclick="return confirm('Weet je zeker dat je dit verslag permanent wilt verwijderen? Alle bijbehorende ruimtes en foto\'s worden ook verwijderd. Deze actie kan niet ongedaan worden gemaakt.')"><i class="bi bi-x-octagon-fill"></i></a>
+                        <a href="<?= csrf_url('?page=admin_restore_verslag&id=' . (int)$verslag['id']) ?>" class="btn btn-sm btn-outline-success" title="Herstellen" aria-label="Herstel verslag <?= (int)$verslag['id'] ?>"><i class="bi bi-arrow-counterclockwise"></i></a>
+                        <a href="<?= csrf_url('?page=admin_permanent_delete_verslag&id=' . (int)$verslag['id']) ?>" class="btn btn-sm btn-outline-danger" title="Permanent verwijderen" aria-label="Permanent verwijderen verslag <?= (int)$verslag['id'] ?>" onclick="return confirm('Weet je zeker dat je dit verslag permanent wilt verwijderen? Alle bijbehorende ruimtes en foto\'s worden ook verwijderd. Deze actie kan niet ongedaan worden gemaakt.')"><i class="bi bi-x-octagon-fill"></i></a>
                       </td>
                     </tr>
                   <?php endforeach; ?>
@@ -306,9 +306,9 @@
                         <?php endif; ?>
                       </td>
                       <td class="text-center d-flex justify-content-center gap-1">
-                        <a href="<?= csrf_url('?page=admin_reset_client_password&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-warning" title="Wachtwoord resetten" onclick="return confirm('Weet je zeker dat je het wachtwoord voor deze klant wilt resetten?')"><i class="bi bi-key-fill"></i></a>
-                        <a href="<?= csrf_url('?page=admin_extend_client&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-success" title="Verleng met 14 dagen"><i class="bi bi-calendar-plus"></i></a>
-                        <a href="<?= csrf_url('?page=admin_revoke_client&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-danger" title="Toegang intrekken" onclick="return confirm('Weet je zeker dat je de toegang voor deze klant wilt intrekken?')"><i class="bi bi-x-circle"></i></a>
+                        <a href="<?= csrf_url('?page=admin_reset_client_password&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-warning" title="Wachtwoord resetten" aria-label="Reset klantwachtwoord voor verslag <?= (int)$portal['verslag_id'] ?>" onclick="return confirm('Weet je zeker dat je het wachtwoord voor deze klant wilt resetten?')"><i class="bi bi-key-fill"></i></a>
+                        <a href="<?= csrf_url('?page=admin_extend_client&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-success" title="Verleng met 14 dagen" aria-label="Verleng klantportaal voor verslag <?= (int)$portal['verslag_id'] ?> met 14 dagen"><i class="bi bi-calendar-plus"></i></a>
+                        <a href="<?= csrf_url('?page=admin_revoke_client&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-danger" title="Toegang intrekken" aria-label="Trek klanttoegang in voor verslag <?= (int)$portal['verslag_id'] ?>" onclick="return confirm('Weet je zeker dat je de toegang voor deze klant wilt intrekken?')"><i class="bi bi-x-circle"></i></a>
                       </td>
                     </tr>
                   <?php endforeach; ?>
@@ -356,12 +356,12 @@
                     <input type="hidden" name="update_branding" value="1">
                     <div class="row align-items-end">
                         <div class="col-auto">
-                            <label class="form-label">Primaire kleur</label>
-                            <input type="color" name="primary_color" class="form-control form-control-color" value="<?= htmlspecialchars($brandingSettings['primary_color'] ?? '#FFD200') ?>">
+                            <label class="form-label" for="primary_color">Primaire kleur</label>
+                            <input id="primary_color" type="color" name="primary_color" class="form-control form-control-color" value="<?= htmlspecialchars($brandingSettings['primary_color'] ?? '#FFD200') ?>">
                         </div>
                         <div class="col-auto">
-                            <label class="form-label">Tekstkleur op knoppen</label>
-                            <input type="color" name="primary_color_contrast" class="form-control form-control-color" value="<?= htmlspecialchars($brandingSettings['primary_color_contrast'] ?? '#111111') ?>">
+                            <label class="form-label" for="primary_color_contrast">Tekstkleur op knoppen</label>
+                            <input id="primary_color_contrast" type="color" name="primary_color_contrast" class="form-control form-control-color" value="<?= htmlspecialchars($brandingSettings['primary_color_contrast'] ?? '#111111') ?>">
                         </div>
                         <div class="col-auto">
                             <button type="submit" class="btn btn-primary"><i class="bi bi-palette"></i> Kleuren opslaan</button>
@@ -451,36 +451,36 @@
           <form id="smtp-form">
             <div class="row g-3">
               <div class="col-md-6">
-                <label class="form-label">SMTP Host</label>
-                <input type="text" name="smtp_host" class="form-control" value="<?= htmlspecialchars($smtpSettings['host'] ?? 'smtp.strato.de') ?>" placeholder="smtp.strato.de">
+                <label class="form-label" for="smtp_host">SMTP Host</label>
+                <input id="smtp_host" type="text" name="smtp_host" class="form-control" value="<?= htmlspecialchars($smtpSettings['host'] ?? 'smtp.strato.de') ?>" placeholder="smtp.strato.de">
               </div>
               <div class="col-md-3">
-                <label class="form-label">SMTP Port</label>
-                <input type="number" name="smtp_port" class="form-control" value="<?= htmlspecialchars($smtpSettings['port'] ?? '465') ?>" placeholder="465">
+                <label class="form-label" for="smtp_port">SMTP Port</label>
+                <input id="smtp_port" type="number" name="smtp_port" class="form-control" value="<?= htmlspecialchars($smtpSettings['port'] ?? '465') ?>" placeholder="465">
               </div>
               <div class="col-md-3">
-                <label class="form-label">Encryptie</label>
-                <select name="smtp_encryption" class="form-select">
+                <label class="form-label" for="smtp_encryption">Encryptie</label>
+                <select id="smtp_encryption" name="smtp_encryption" class="form-select">
                     <option value="" <?= empty($smtpSettings['encryption']) ? 'selected' : '' ?>>Geen</option>
                     <option value="tls" <?= (($smtpSettings['encryption'] ?? '') === 'tls') ? 'selected' : '' ?>>TLS</option>
                     <option value="ssl" <?= (($smtpSettings['encryption'] ?? 'ssl') === 'ssl') ? 'selected' : '' ?>>SSL</option>
                 </select>
               </div>
               <div class="col-md-6 mt-3">
-                <label class="form-label">Gebruikersnaam</label>
-                <input type="text" name="smtp_username" class="form-control" value="<?= htmlspecialchars($smtpSettings['username'] ?? '') ?>">
+                <label class="form-label" for="smtp_username">Gebruikersnaam</label>
+                <input id="smtp_username" type="text" name="smtp_username" class="form-control" value="<?= htmlspecialchars($smtpSettings['username'] ?? '') ?>">
               </div>
               <div class="col-md-6">
-                <label class="form-label">Wachtwoord</label>
-                <input type="password" name="smtp_password" class="form-control" placeholder="Laat leeg om niet te wijzigen">
+                <label class="form-label" for="smtp_password">Wachtwoord</label>
+                <input id="smtp_password" type="password" name="smtp_password" class="form-control" placeholder="Laat leeg om niet te wijzigen">
               </div>
               <div class="col-md-6 mt-3">
-                <label class="form-label">Afzender e-mail</label>
-                <input type="email" name="smtp_from_address" class="form-control" value="<?= htmlspecialchars($smtpSettings['from_address'] ?? '') ?>">
+                <label class="form-label" for="smtp_from_address">Afzender e-mail</label>
+                <input id="smtp_from_address" type="email" name="smtp_from_address" class="form-control" value="<?= htmlspecialchars($smtpSettings['from_address'] ?? '') ?>">
               </div>
               <div class="col-md-6 mt-3">
-                <label class="form-label">Afzender naam</label>
-                <input type="text" name="smtp_from_name" class="form-control" value="<?= htmlspecialchars($smtpSettings['from_name'] ?? '') ?>">
+                <label class="form-label" for="smtp_from_name">Afzender naam</label>
+                <input id="smtp_from_name" type="text" name="smtp_from_name" class="form-control" value="<?= htmlspecialchars($smtpSettings['from_name'] ?? '') ?>">
               </div>
             </div>
             <div class="text-end mt-4 d-flex justify-content-end gap-2">
@@ -511,8 +511,8 @@
                 </h2>
                 <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#emailTemplateAccordion">
                   <div class="accordion-body">
-                    <div class="mb-3"><label class="form-label small">Onderwerp</label><input type="text" name="password_reset_subject" class="form-control form-control-sm" value="<?= htmlspecialchars($emailTemplates['password_reset']['subject'] ?? '') ?>"></div>
-                    <div class="mb-2"><label class="form-label small">Inhoud</label><textarea name="password_reset_body" class="form-control tinymce-editor" rows="6"><?= htmlspecialchars($emailTemplates['password_reset']['body'] ?? '') ?></textarea><small class="text-muted">Variabelen: <code>{user_fullname}</code>, <code>{reset_link}</code></small></div>
+                    <div class="mb-3"><label class="form-label small" for="password_reset_subject">Onderwerp</label><input id="password_reset_subject" type="text" name="password_reset_subject" class="form-control form-control-sm" value="<?= htmlspecialchars($emailTemplates['password_reset']['subject'] ?? '') ?>"></div>
+                    <div class="mb-2"><label class="form-label small" for="password_reset_body">Inhoud</label><textarea id="password_reset_body" name="password_reset_body" class="form-control tinymce-editor" rows="6"><?= htmlspecialchars($emailTemplates['password_reset']['body'] ?? '') ?></textarea><small class="text-muted">Variabelen: <code>{user_fullname}</code>, <code>{reset_link}</code></small></div>
                   </div>
                 </div>
               </div>
@@ -524,8 +524,8 @@
                 </h2>
                 <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#emailTemplateAccordion">
                   <div class="accordion-body">
-                    <div class="mb-3"><label class="form-label small">Onderwerp</label><input type="text" name="client_update_subject" class="form-control form-control-sm" value="<?= htmlspecialchars($emailTemplates['client_update']['subject'] ?? '') ?>"></div>
-                    <div class="mb-2"><label class="form-label small">Inhoud</label><textarea name="client_update_body" class="form-control tinymce-editor" rows="5"><?= htmlspecialchars($emailTemplates['client_update']['body'] ?? '') ?></textarea><small class="text-muted">Variabelen: <code>{am_fullname}</code>, <code>{klantnaam}</code>, <code>{project_title}</code></small></div>
+                    <div class="mb-3"><label class="form-label small" for="client_update_subject">Onderwerp</label><input id="client_update_subject" type="text" name="client_update_subject" class="form-control form-control-sm" value="<?= htmlspecialchars($emailTemplates['client_update']['subject'] ?? '') ?>"></div>
+                    <div class="mb-2"><label class="form-label small" for="client_update_body">Inhoud</label><textarea id="client_update_body" name="client_update_body" class="form-control tinymce-editor" rows="5"><?= htmlspecialchars($emailTemplates['client_update']['body'] ?? '') ?></textarea><small class="text-muted">Variabelen: <code>{am_fullname}</code>, <code>{klantnaam}</code>, <code>{project_title}</code></small></div>
                   </div>
                 </div>
               </div>
@@ -537,8 +537,8 @@
                 </h2>
                 <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#emailTemplateAccordion">
                   <div class="accordion-body">
-                    <div class="mb-3"><label class="form-label small">Onderwerp</label><input type="text" name="new_client_login_subject" class="form-control form-control-sm" value="<?= htmlspecialchars($emailTemplates['new_client_login']['subject'] ?? '') ?>"></div>
-                    <div class="mb-2"><label class="form-label small">Inhoud</label><textarea name="new_client_login_body" class="form-control tinymce-editor" rows="8"><?= htmlspecialchars($emailTemplates['new_client_login']['body'] ?? '') ?></textarea><small class="text-muted">Variabelen: <code>{client_name}</code>, <code>{project_title}</code>, <code>{login_email}</code>, <code>{login_password}</code>, <code>{login_link}</code>, <code>{am_name}</code></small></div>
+                    <div class="mb-3"><label class="form-label small" for="new_client_login_subject">Onderwerp</label><input id="new_client_login_subject" type="text" name="new_client_login_subject" class="form-control form-control-sm" value="<?= htmlspecialchars($emailTemplates['new_client_login']['subject'] ?? '') ?>"></div>
+                    <div class="mb-2"><label class="form-label small" for="new_client_login_body">Inhoud</label><textarea id="new_client_login_body" name="new_client_login_body" class="form-control tinymce-editor" rows="8"><?= htmlspecialchars($emailTemplates['new_client_login']['body'] ?? '') ?></textarea><small class="text-muted">Variabelen: <code>{client_name}</code>, <code>{project_title}</code>, <code>{login_email}</code>, <code>{login_password}</code>, <code>{login_link}</code>, <code>{am_name}</code></small></div>
                   </div>
                 </div>
               </div>
@@ -550,8 +550,8 @@
                 </h2>
                 <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#emailTemplateAccordion">
                   <div class="accordion-body">
-                    <div class="mb-3"><label class="form-label small">Onderwerp</label><input type="text" name="client_portal_extended_subject" class="form-control form-control-sm" value="<?= htmlspecialchars($emailTemplates['client_portal_extended']['subject'] ?? '') ?>"></div>
-                    <div class="mb-2"><label class="form-label small">Inhoud</label><textarea name="client_portal_extended_body" class="form-control tinymce-editor" rows="4"><?= htmlspecialchars($emailTemplates['client_portal_extended']['body'] ?? '') ?></textarea><small class="text-muted">Variabelen: <code>{client_name}</code>, <code>{project_title}</code>, <code>{login_link}</code>, <code>{expiry_date}</code></small></div>
+                    <div class="mb-3"><label class="form-label small" for="client_portal_extended_subject">Onderwerp</label><input id="client_portal_extended_subject" type="text" name="client_portal_extended_subject" class="form-control form-control-sm" value="<?= htmlspecialchars($emailTemplates['client_portal_extended']['subject'] ?? '') ?>"></div>
+                    <div class="mb-2"><label class="form-label small" for="client_portal_extended_body">Inhoud</label><textarea id="client_portal_extended_body" name="client_portal_extended_body" class="form-control tinymce-editor" rows="4"><?= htmlspecialchars($emailTemplates['client_portal_extended']['body'] ?? '') ?></textarea><small class="text-muted">Variabelen: <code>{client_name}</code>, <code>{project_title}</code>, <code>{login_link}</code>, <code>{expiry_date}</code></small></div>
                   </div>
                 </div>
               </div>
@@ -563,8 +563,8 @@
                 </h2>
                 <div id="collapseFive" class="accordion-collapse collapse" data-bs-parent="#emailTemplateAccordion">
                   <div class="accordion-body">
-                    <div class="mb-3"><label class="form-label small">Onderwerp</label><input type="text" name="new_user_created_subject" class="form-control form-control-sm" value="<?= htmlspecialchars($emailTemplates['new_user_created']['subject'] ?? '') ?>"></div>
-                    <div class="mb-2"><label class="form-label small">Inhoud</label><textarea name="new_user_created_body" class="form-control tinymce-editor" rows="8"><?= htmlspecialchars($emailTemplates['new_user_created']['body'] ?? '') ?></textarea><small class="text-muted">Variabelen: <code>{user_fullname}</code>, <code>{user_email}</code>, <code>{user_password}</code>, <code>{login_link}</code></small></div>
+                    <div class="mb-3"><label class="form-label small" for="new_user_created_subject">Onderwerp</label><input id="new_user_created_subject" type="text" name="new_user_created_subject" class="form-control form-control-sm" value="<?= htmlspecialchars($emailTemplates['new_user_created']['subject'] ?? '') ?>"></div>
+                    <div class="mb-2"><label class="form-label small" for="new_user_created_body">Inhoud</label><textarea id="new_user_created_body" name="new_user_created_body" class="form-control tinymce-editor" rows="8"><?= htmlspecialchars($emailTemplates['new_user_created']['body'] ?? '') ?></textarea><small class="text-muted">Variabelen: <code>{user_fullname}</code>, <code>{user_email}</code>, <code>{user_password}</code>, <code>{login_link}</code></small></div>
                   </div>
                 </div>
               </div>
