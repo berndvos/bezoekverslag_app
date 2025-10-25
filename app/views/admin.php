@@ -78,20 +78,20 @@
                         <!-- Overnemen knop -->
                         <?php if (isAdmin() && ($u['id'] ?? 0) !== ($_SESSION['user_id'] ?? -1)): ?>
                           <a href="<?= csrf_url('?page=admin_impersonate&id=' . (int)$u['id']) ?>" class="btn btn-sm btn-outline-warning" title="Login overnemen" aria-label="Login overnemen voor <?= htmlspecialchars($u['email'] ?? '') ?>">
-                            <i class="bi bi-person-fill-gear"></i>
+                            <i class="bi bi-person-fill-gear" aria-hidden="true"></i>
                           </a>
                         <?php endif; ?>
                         <!-- Wachtwoord reset knop -->
                         <?php if (isAdmin() && ($u['id'] ?? 0) !== ($_SESSION['user_id'] ?? -1)): ?>
                           <a href="<?= csrf_url('?page=admin_reset_password&id=' . (int)$u['id']) ?>" class="btn btn-sm btn-outline-secondary" title="Stuur wachtwoord reset" aria-label="Wachtwoord reset sturen naar <?= htmlspecialchars($u['email'] ?? '') ?>" onclick="return confirm('Weet je zeker dat je een wachtwoord-reset mail wilt sturen naar deze gebruiker?')">
-                            <i class="bi bi-envelope-at"></i>
+                            <i class="bi bi-envelope-at" aria-hidden="true"></i>
                           </a>
                         <?php endif; ?>
                         <!-- Verwijderen knop -->
                         <?php if (isAdmin() && ($u['id'] ?? 0) !== ($_SESSION['user_id'] ?? -1)): ?>
                           <a href="<?= csrf_url('?page=admin_delete_user&id=' . (int)$u['id']) ?>" class="btn btn-sm btn-outline-danger" aria-label="Verwijder gebruiker <?= htmlspecialchars($u['email'] ?? '') ?>"
                              onclick="return confirm('Weet je zeker dat je deze gebruiker wilt verwijderen?')">
-                            <i class="bi bi-trash"></i>
+                            <i class="bi bi-trash" aria-hidden="true"></i>
                           </a>
                         <?php endif; ?>
                       </td>
@@ -262,8 +262,8 @@
                       <td><?= htmlspecialchars($verslag['klantnaam']) ?></td>
                       <td><?= htmlspecialchars(date($adminDateFormat, strtotime($verslag['deleted_at']))) ?></td>
                       <td class="text-center d-flex justify-content-center gap-1">
-                        <a href="<?= csrf_url('?page=admin_restore_verslag&id=' . (int)$verslag['id']) ?>" class="btn btn-sm btn-outline-success" title="Herstellen" aria-label="Herstel verslag <?= (int)$verslag['id'] ?>"><i class="bi bi-arrow-counterclockwise"></i></a>
-                        <a href="<?= csrf_url('?page=admin_permanent_delete_verslag&id=' . (int)$verslag['id']) ?>" class="btn btn-sm btn-outline-danger" title="Permanent verwijderen" aria-label="Permanent verwijderen verslag <?= (int)$verslag['id'] ?>" onclick="return confirm('Weet je zeker dat je dit verslag permanent wilt verwijderen? Alle bijbehorende ruimtes en foto\'s worden ook verwijderd. Deze actie kan niet ongedaan worden gemaakt.')"><i class="bi bi-x-octagon-fill"></i></a>
+                        <a href="<?= csrf_url('?page=admin_restore_verslag&id=' . (int)$verslag['id']) ?>" class="btn btn-sm btn-outline-success" title="Herstellen" aria-label="Herstel verslag <?= (int)$verslag['id'] ?>"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i></a>
+                        <a href="<?= csrf_url('?page=admin_permanent_delete_verslag&id=' . (int)$verslag['id']) ?>" class="btn btn-sm btn-outline-danger" title="Permanent verwijderen" aria-label="Permanent verwijderen verslag <?= (int)$verslag['id'] ?>" onclick="return confirm('Weet je zeker dat je dit verslag permanent wilt verwijderen? Alle bijbehorende ruimtes en foto\'s worden ook verwijderd. Deze actie kan niet ongedaan worden gemaakt.')"><i class="bi bi-x-octagon-fill" aria-hidden="true"></i></a>
                       </td>
                     </tr>
                   <?php endforeach; ?>
@@ -306,9 +306,9 @@
                         <?php endif; ?>
                       </td>
                       <td class="text-center d-flex justify-content-center gap-1">
-                        <a href="<?= csrf_url('?page=admin_reset_client_password&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-warning" title="Wachtwoord resetten" aria-label="Reset klantwachtwoord voor verslag <?= (int)$portal['verslag_id'] ?>" onclick="return confirm('Weet je zeker dat je het wachtwoord voor deze klant wilt resetten?')"><i class="bi bi-key-fill"></i></a>
-                        <a href="<?= csrf_url('?page=admin_extend_client&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-success" title="Verleng met 14 dagen" aria-label="Verleng klantportaal voor verslag <?= (int)$portal['verslag_id'] ?> met 14 dagen"><i class="bi bi-calendar-plus"></i></a>
-                        <a href="<?= csrf_url('?page=admin_revoke_client&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-danger" title="Toegang intrekken" aria-label="Trek klanttoegang in voor verslag <?= (int)$portal['verslag_id'] ?>" onclick="return confirm('Weet je zeker dat je de toegang voor deze klant wilt intrekken?')"><i class="bi bi-x-circle"></i></a>
+                        <a href="<?= csrf_url('?page=admin_reset_client_password&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-warning" title="Wachtwoord resetten" aria-label="Reset klantwachtwoord voor verslag <?= (int)$portal['verslag_id'] ?>" onclick="return confirm('Weet je zeker dat je het wachtwoord voor deze klant wilt resetten?')"><i class="bi bi-key-fill" aria-hidden="true"></i></a>
+                        <a href="<?= csrf_url('?page=admin_extend_client&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-success" title="Verleng met 14 dagen" aria-label="Verleng klantportaal voor verslag <?= (int)$portal['verslag_id'] ?> met 14 dagen"><i class="bi bi-calendar-plus" aria-hidden="true"></i></a>
+                        <a href="<?= csrf_url('?page=admin_revoke_client&id=' . (int)$portal['verslag_id']) ?>" class="btn btn-sm btn-outline-danger" title="Toegang intrekken" aria-label="Trek klanttoegang in voor verslag <?= (int)$portal['verslag_id'] ?>" onclick="return confirm('Weet je zeker dat je de toegang voor deze klant wilt intrekken?')"><i class="bi bi-x-circle" aria-hidden="true"></i></a>
                       </td>
                     </tr>
                   <?php endforeach; ?>
