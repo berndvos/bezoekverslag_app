@@ -1,8 +1,9 @@
 ﻿<?php
 // app/views/layout/header.php
+use App\Config\Branding;
 
 // Haal de branding-instellingen op
-$brandingConfig = \App\Config\Branding::get();
+$brandingConfig = Branding::get();
 $primaryColor = $brandingConfig['primary_color'] ?? '#FFD200';
 $primaryColorContrast = $brandingConfig['primary_color_contrast'] ?? '#111111';
 $logoPath = $brandingConfig['logo_path'] ?? '';

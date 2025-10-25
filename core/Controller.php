@@ -1,4 +1,6 @@
 <?php
+namespace App\Core;
+
 class Controller {
     protected function view($path, $vars = []) {
         extract($vars);
