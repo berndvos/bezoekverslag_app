@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Controllers;
 
@@ -1017,7 +1017,7 @@ class AdminController {
             $_SESSION['role'] = $originalUser['role'];
 
             // Log de actie nu de originele sessie hersteld is
-            log_action('impersonate_stop', 'Admin ' . (['email'] ?? '') . ' heeft de overname van ' . ( ?? '') . ' beëindigd.');
+            log_action('impersonate_stop', "Admin '{$_SESSION['email']}' heeft de overname van '{$impersonatedEmail}' be├âãÆ├åÔÇÖ├âÔÇá├óÔé¼Ôäó├âãÆ├óÔé¼┼í├âÔÇÜ├é┬½indigd.");
         }
         header(self::REDIRECT_ADMIN);
         exit;
