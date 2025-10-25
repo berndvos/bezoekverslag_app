@@ -90,20 +90,20 @@
           <div class="card-body">
             <div class="row g-3">
               <div class="col-md-6">
-                <label class="form-label">Naam</label>
-                <input type="text" name="contact_naam" class="form-control" value="<?= htmlspecialchars($verslag['contact_naam'] ?? '') ?>">
+                <label for="contact_naam" class="form-label">Naam</label>
+                <input id="contact_naam" type="text" name="contact_naam" class="form-control" value="<?= htmlspecialchars($verslag['contact_naam'] ?? '') ?>">
               </div>
               <div class="col-md-6">
-                <label class="form-label">Functie</label>
-                <input type="text" name="contact_functie" class="form-control" value="<?= htmlspecialchars($verslag['contact_functie'] ?? '') ?>">
+                <label for="contact_functie" class="form-label">Functie</label>
+                <input id="contact_functie" type="text" name="contact_functie" class="form-control" value="<?= htmlspecialchars($verslag['contact_functie'] ?? '') ?>">
               </div>
               <div class="col-md-6">
-                <label class="form-label">E-mailadres</label>
-                <input type="email" name="contact_email" class="form-control" value="<?= htmlspecialchars($verslag['contact_email'] ?? '') ?>">
+                <label for="contact_email" class="form-label">E-mailadres</label>
+                <input id="contact_email" type="email" name="contact_email" class="form-control" value="<?= htmlspecialchars($verslag['contact_email'] ?? '') ?>">
               </div>
               <div class="col-md-6">
-                <label class="form-label">Telefoonnummer</label>
-                <input type="text" name="contact_tel" class="form-control" value="<?= htmlspecialchars($verslag['contact_tel'] ?? '') ?>">
+                <label for="contact_tel" class="form-label">Telefoonnummer</label>
+                <input id="contact_tel" type="text" name="contact_tel" class="form-control" value="<?= htmlspecialchars($verslag['contact_tel'] ?? '') ?>">
               </div>
             </div>
             <div class="mt-3 text-end"><button type="submit" name="save_section" value="contact" class="btn btn-primary"><i class="bi bi-save"></i> Opslaan</button></div>
@@ -117,23 +117,23 @@
           <div class="card-body">
             <div class="row g-3">
               <div class="col-md-6">
-                  <label class="form-label">Gewenste offertedatum</label>
+                  <label for="gewenste_offertedatum" class="form-label">Gewenste offertedatum</label>
                   <?php
                     $today = date('Y-m-d');
                     $defaultOfferteDatum = date('Y-m-d', strtotime('+10 days'));
                     $offerteDatumValue = !empty($verslag['gewenste_offertedatum']) ? $verslag['gewenste_offertedatum'] : $defaultOfferteDatum;
                   ?>
-                  <input type="date" name="gewenste_offertedatum" class="form-control" value="<?= htmlspecialchars($offerteDatumValue) ?>" min="<?= $today ?>">
+                  <input id="gewenste_offertedatum" type="date" name="gewenste_offertedatum" class="form-control" value="<?= htmlspecialchars($offerteDatumValue) ?>" min="<?= $today ?>">
               </div>
               <div class="col-md-6">
-                <label class="form-label">Indicatief budget</label>
-                <input type="text" name="indicatief_budget" class="form-control" value="<?= htmlspecialchars($verslag['indicatief_budget'] ?? '') ?>" placeholder="Bijv. â‚¬ 5.000 - â‚¬ 10.000">
+                <label for="indicatief_budget" class="form-label">Indicatief budget</label>
+                <input id="indicatief_budget" type="text" name="indicatief_budget" class="form-control" value="<?= htmlspecialchars($verslag['indicatief_budget'] ?? '') ?>" placeholder="Bijv. â‚¬ 5.000 - â‚¬ 10.000">
               </div>
               <!-- De velden 'situatie', 'functioneel', 'uitbreiding' worden nu beheerd via het 'Leveranciers' blok -->
               <input type="hidden" name="situatie" id="hidden_situatie" value="<?= htmlspecialchars($verslag['situatie'] ?? '') ?>">
               <input type="hidden" name="functioneel" id="hidden_functioneel" value="<?= htmlspecialchars($verslag['functioneel'] ?? '') ?>">
               <input type="hidden" name="uitbreiding" id="hidden_uitbreiding" value="<?= htmlspecialchars($verslag['uitbreiding'] ?? '') ?>">
-              <div class="col-md-12"><label class="form-label">Overige wensen</label><textarea name="wensen" class="form-control" rows="3"><?= htmlspecialchars($verslag['wensen'] ?? '') ?></textarea></div>
+              <div class="col-md-12"><label for="wensen_overige" class="form-label">Overige wensen</label><textarea name="wensen" id="wensen_overige" class="form-control" rows="3"><?= htmlspecialchars($verslag['wensen'] ?? '') ?></textarea></div>
             </div>
             <div class="mt-3 text-end"><button type="submit" name="save_section" value="wensen" class="btn btn-primary"><i class="bi bi-save"></i> Opslaan</button></div>
           </div>
@@ -144,12 +144,12 @@
           <div class="card-header bg-primary text-white"><i class="bi bi-shield-check"></i> Eisen</div>
           <div class="card-body">
             <div class="row g-3">
-              <div class="col-md-6"><label class="form-label">Beeldkwaliteit</label><input type="text" name="beeldkwaliteitseisen" class="form-control" value="<?= htmlspecialchars($verslag['beeldkwaliteitseisen'] ?? '') ?>"></div>
-              <div class="col-md-6"><label class="form-label">Geluidseisen</label><input type="text" name="geluidseisen" class="form-control" value="<?= htmlspecialchars($verslag['geluidseisen'] ?? '') ?>"></div>
-              <div class="col-md-6"><label class="form-label">Bedieningseisen</label><input type="text" name="bedieningseisen" class="form-control" value="<?= htmlspecialchars($verslag['bedieningseisen'] ?? '') ?>"></div>
-              <div class="col-md-6"><label class="form-label">Beveiligingseisen</label><input type="text" name="beveiligingseisen" class="form-control" value="<?= htmlspecialchars($verslag['beveiligingseisen'] ?? '') ?>"></div>
-              <div class="col-md-6"><label class="form-label">Netwerkeisen</label><input type="text" name="netwerkeisen" class="form-control" value="<?= htmlspecialchars($verslag['netwerkeisen'] ?? '') ?>"></div>
-              <div class="col-md-6"><label class="form-label">Garantie / onderhoud</label><input type="text" name="garantie" class="form-control" value="<?= htmlspecialchars($verslag['garantie'] ?? '') ?>"></div>
+              <div class="col-md-6"><label for="beeldkwaliteitseisen" class="form-label">Beeldkwaliteit</label><input id="beeldkwaliteitseisen" type="text" name="beeldkwaliteitseisen" class="form-control" value="<?= htmlspecialchars($verslag['beeldkwaliteitseisen'] ?? '') ?>"></div>
+              <div class="col-md-6"><label for="geluidseisen" class="form-label">Geluidseisen</label><input id="geluidseisen" type="text" name="geluidseisen" class="form-control" value="<?= htmlspecialchars($verslag['geluidseisen'] ?? '') ?>"></div>
+              <div class="col-md-6"><label for="bedieningseisen" class="form-label">Bedieningseisen</label><input id="bedieningseisen" type="text" name="bedieningseisen" class="form-control" value="<?= htmlspecialchars($verslag['bedieningseisen'] ?? '') ?>"></div>
+              <div class="col-md-6"><label for="beveiligingseisen" class="form-label">Beveiligingseisen</label><input id="beveiligingseisen" type="text" name="beveiligingseisen" class="form-control" value="<?= htmlspecialchars($verslag['beveiligingseisen'] ?? '') ?>"></div>
+              <div class="col-md-6"><label for="netwerkeisen" class="form-label">Netwerkeisen</label><input id="netwerkeisen" type="text" name="netwerkeisen" class="form-control" value="<?= htmlspecialchars($verslag['netwerkeisen'] ?? '') ?>"></div>
+              <div class="col-md-6"><label for="garantie" class="form-label">Garantie / onderhoud</label><input id="garantie" type="text" name="garantie" class="form-control" value="<?= htmlspecialchars($verslag['garantie'] ?? '') ?>"></div>
             </div>
             <div class="mt-3 text-end"><button type="submit" name="save_section" value="eisen" class="btn btn-primary"><i class="bi bi-save"></i> Opslaan</button></div>
           </div>
@@ -160,52 +160,52 @@
           <div class="card-header bg-primary text-white"><i class="bi bi-gear"></i> Installatie</div>
           <div class="card-body">
             <div class="row g-3 mb-4">
-              <div class="col-md-6"><label class="form-label">Installatieadres afwijkend van relatieadres?</label><select name="installatie_adres_afwijkend" id="installatieAdresAfwijkend" class="form-select"><option value="Nee" <?= (($verslag['installatie_adres_afwijkend'] ?? 'Nee') === 'Nee') ? 'selected' : '' ?>>Nee</option><option value="Ja" <?= (($verslag['installatie_adres_afwijkend'] ?? '') === 'Ja') ? 'selected' : '' ?>>Ja</option></select></div>
+              <div class="col-md-6"><label for="installatieAdresAfwijkend" class="form-label">Installatieadres afwijkend van relatieadres?</label><select name="installatie_adres_afwijkend" id="installatieAdresAfwijkend" class="form-select"><option value="Nee" <?= (($verslag['installatie_adres_afwijkend'] ?? 'Nee') === 'Nee') ? 'selected' : '' ?>>Nee</option><option value="Ja" <?= (($verslag['installatie_adres_afwijkend'] ?? '') === 'Ja') ? 'selected' : '' ?>>Ja</option></select></div>
             </div>
             <div id="afwijkendAdresContainer" class="row g-3 p-3 mb-4 border rounded bg-light" style="display: none;">
               <h6 class="mb-0 text-muted">Afwijkend installatieadres</h6>
               <div class="col-md-3">
-                <label class="form-label">Postcode <span id="postcode-spinner-installatie" class="spinner-border spinner-border-sm text-primary ms-1" role/="status" style="display: none;"></span></label>
-                <input type="text" name="installatie_adres_postcode" class="form-control postcode-lookup" 
+                <label for="installatie_adres_postcode" class="form-label">Postcode <span id="postcode-spinner-installatie" class="spinner-border spinner-border-sm text-primary ms-1" role/="status" style="display: none;"></span></label>
+                <input id="installatie_adres_postcode" type="text" name="installatie_adres_postcode" class="form-control postcode-lookup" 
                        value="<?= htmlspecialchars($verslag['installatie_adres_postcode'] ?? '') ?>" data-prefix="installatie" placeholder="1234AB">
               </div>
               <div class="col-md-3">
-                  <label class="form-label">Huisnummer</label>
-                  <input type="text" name="installatie_adres_huisnummer" class="form-control" value="<?= htmlspecialchars($verslag['installatie_adres_huisnummer'] ?? '') ?>">
+                  <label for="installatie_adres_huisnummer" class="form-label">Huisnummer</label>
+                  <input id="installatie_adres_huisnummer" type="text" name="installatie_adres_huisnummer" class="form-control" value="<?= htmlspecialchars($verslag['installatie_adres_huisnummer'] ?? '') ?>">
               </div>
               <div class="col-md-3">
-                  <label class="form-label">Toevoeging</label>
-                  <input type="text" name="installatie_adres_huisnummer_toevoeging" class="form-control" value="<?= htmlspecialchars($verslag['installatie_adres_huisnummer_toevoeging'] ?? '') ?>">
+                  <label for="installatie_adres_huisnummer_toevoeging" class="form-label">Toevoeging</label>
+                  <input id="installatie_adres_huisnummer_toevoeging" type="text" name="installatie_adres_huisnummer_toevoeging" class="form-control" value="<?= htmlspecialchars($verslag['installatie_adres_huisnummer_toevoeging'] ?? '') ?>">
               </div>
-              <div class="col-md-6"><label class="form-label">Straatnaam</label><input type="text" name="installatie_adres_straat" class="form-control" value="<?= htmlspecialchars($verslag['installatie_adres_straat'] ?? '') ?>"></div>
-              <div class="col-md-3"><label class="form-label">Plaats</label><input type="text" name="installatie_adres_plaats" class="form-control" value="<?= htmlspecialchars($verslag['installatie_adres_plaats'] ?? '') ?>"></div>
+              <div class="col-md-6"><label for="installatie_adres_straat" class="form-label">Straatnaam</label><input id="installatie_adres_straat" type="text" name="installatie_adres_straat" class="form-control" value="<?= htmlspecialchars($verslag['installatie_adres_straat'] ?? '') ?>"></div>
+              <div class="col-md-3"><label for="installatie_adres_plaats" class="form-label">Plaats</label><input id="installatie_adres_plaats" type="text" name="installatie_adres_plaats" class="form-control" value="<?= htmlspecialchars($verslag['installatie_adres_plaats'] ?? '') ?>"></div>
             </div>
 
             <div class="row g-3 mb-4">
-              <div class="col-md-6"><label class="form-label">Contactpersoon op locatie afwijkend?</label><select name="cp_locatie_afwijkend" id="cpLocatieAfwijkend" class="form-select"><option value="Nee" <?= (($verslag['cp_locatie_afwijkend'] ?? 'Nee') === 'Nee') ? 'selected' : '' ?>>Nee</option><option value="Ja" <?= (($verslag['cp_locatie_afwijkend'] ?? '') === 'Ja') ? 'selected' : '' ?>>Ja</option></select></div>
+              <div class="col-md-6"><label for="cpLocatieAfwijkend" class="form-label">Contactpersoon op locatie afwijkend?</label><select name="cp_locatie_afwijkend" id="cpLocatieAfwijkend" class="form-select"><option value="Nee" <?= (($verslag['cp_locatie_afwijkend'] ?? 'Nee') === 'Nee') ? 'selected' : '' ?>>Nee</option><option value="Ja" <?= (($verslag['cp_locatie_afwijkend'] ?? '') === 'Ja') ? 'selected' : '' ?>>Ja</option></select></div>
             </div>
             <div id="afwijkendeCpContainer" class="row g-3 p-3 mb-4 border rounded bg-light" style="display: none;">
               <h6 class="mb-0 text-muted">Contactpersoon op locatie</h6>
-              <div class="col-md-6"><label class="form-label">Naam</label><input type="text" name="cp_locatie_naam" class="form-control" value="<?= htmlspecialchars($verslag['cp_locatie_naam'] ?? '') ?>"></div>
-              <div class="col-md-6"><label class="form-label">Functie</label><input type="text" name="cp_locatie_functie" class="form-control" value="<?= htmlspecialchars($verslag['cp_locatie_functie'] ?? '') ?>"></div>
-              <div class="col-md-6"><label class="form-label">E-mailadres</label><input type="email" name="cp_locatie_email" class="form-control" value="<?= htmlspecialchars($verslag['cp_locatie_email'] ?? '') ?>"></div>
-              <div class="col-md-6"><label class="form-label">Telefoonnummer</label><input type="text" name="cp_locatie_tel" class="form-control" value="<?= htmlspecialchars($verslag['cp_locatie_tel'] ?? '') ?>"></div>
+              <div class="col-md-6"><label for="cp_locatie_naam" class="form-label">Naam</label><input id="cp_locatie_naam" type="text" name="cp_locatie_naam" class="form-control" value="<?= htmlspecialchars($verslag['cp_locatie_naam'] ?? '') ?>"></div>
+              <div class="col-md-6"><label for="cp_locatie_functie" class="form-label">Functie</label><input id="cp_locatie_functie" type="text" name="cp_locatie_functie" class="form-control" value="<?= htmlspecialchars($verslag['cp_locatie_functie'] ?? '') ?>"></div>
+              <div class="col-md-6"><label for="cp_locatie_email" class="form-label">E-mailadres</label><input id="cp_locatie_email" type="email" name="cp_locatie_email" class="form-control" value="<?= htmlspecialchars($verslag['cp_locatie_email'] ?? '') ?>"></div>
+              <div class="col-md-6"><label for="cp_locatie_tel" class="form-label">Telefoonnummer</label><input id="cp_locatie_tel" type="text" name="cp_locatie_tel" class="form-control" value="<?= htmlspecialchars($verslag['cp_locatie_tel'] ?? '') ?>"></div>
             </div>
 
             <hr>
             <h6 class="text-muted mt-4">Overige installatiegegevens</h6>
             <div class="row g-3 mt-1">
-                <div class="col-md-6"><label class="form-label">Afvoer oude apparatuur</label><select name="afvoer" id="afvoerSelect" class="form-select"><option value="">Kies...</option><option value="Ja" <?= (($verslag['afvoer'] ?? '') === 'Ja') ? 'selected' : '' ?>>Ja</option><option value="Nee" <?= (($verslag['afvoer'] ?? '') === 'Nee') ? 'selected' : '' ?>>Nee</option></select></div>
+                <div class="col-md-6"><label for="afvoerSelect" class="form-label">Afvoer oude apparatuur</label><select name="afvoer" id="afvoerSelect" class="form-select"><option value="">Kies...</option><option value="Ja" <?= (($verslag['afvoer'] ?? '') === 'Ja') ? 'selected' : '' ?>>Ja</option><option value="Nee" <?= (($verslag['afvoer'] ?? '') === 'Nee') ? 'selected' : '' ?>>Nee</option></select></div>
                 <div class="col-md-12" id="afvoerOmschrijvingContainer" style="display: none;">
-                    <label class="form-label">Omschrijving af te voeren apparatuur</label><textarea name="afvoer_omschrijving" class="form-control" rows="2" placeholder="Bijv. 1x 55 inch TV, 2x speakers..."><?= htmlspecialchars($verslag['afvoer_omschrijving'] ?? '') ?></textarea>
+                    <label for="afvoer_omschrijving" class="form-label">Omschrijving af te voeren apparatuur</label><textarea id="afvoer_omschrijving" name="afvoer_omschrijving" class="form-control" rows="2" placeholder="Bijv. 1x 55 inch TV, 2x speakers..."><?= htmlspecialchars($verslag['afvoer_omschrijving'] ?? '') ?></textarea>
                 </div>
-                <div class="col-md-6"><label class="form-label">Gewenste installatiedatum</label><input type="date" name="installatiedatum" class="form-control" value="<?= htmlspecialchars($verslag['installatiedatum'] ?? '') ?>" min="<?= $today ?>"></div>
-                <div class="col-md-6"><label class="form-label">Locatie apparatuur</label><input type="text" name="locatie_apparatuur" class="form-control" value="<?= htmlspecialchars($verslag['locatie_apparatuur'] ?? '') ?>"></div>
-                <div class="col-md-6"><label class="form-label">Aantal installaties</label><input type="number" name="aantal_installaties" class="form-control" value="<?= htmlspecialchars($verslag['aantal_installaties'] ?? '') ?>"></div>
-                <div class="col-md-6"><label class="form-label">Parkeerrestricties</label><input type="text" name="parkeren" class="form-control" value="<?= htmlspecialchars($verslag['parkeren'] ?? '') ?>"></div>
-                <div class="col-md-6"><label class="form-label">Toegangsprocedures</label><input type="text" name="toegang" class="form-control" value="<?= htmlspecialchars($verslag['toegang'] ?? '') ?>"></div>
-                <div class="col-md-6"><label class="form-label">Boortijden / geluidsrestricties</label><input type="text" name="boortijden" class="form-control" value="<?= htmlspecialchars($verslag['boortijden'] ?? '') ?>"></div>
-                <div class="col-md-6"><label class="form-label">Gewenste opleverdatum</label><input type="date" name="opleverdatum" class="form-control" value="<?= htmlspecialchars($verslag['opleverdatum'] ?? '') ?>" min="<?= $today ?>"></div>
+                <div class="col-md-6"><label for="installatiedatum" class="form-label">Gewenste installatiedatum</label><input id="installatiedatum" type="date" name="installatiedatum" class="form-control" value="<?= htmlspecialchars($verslag['installatiedatum'] ?? '') ?>" min="<?= $today ?>"></div>
+                <div class="col-md-6"><label for="locatie_apparatuur" class="form-label">Locatie apparatuur</label><input id="locatie_apparatuur" type="text" name="locatie_apparatuur" class="form-control" value="<?= htmlspecialchars($verslag['locatie_apparatuur'] ?? '') ?>"></div>
+                <div class="col-md-6"><label for="aantal_installaties" class="form-label">Aantal installaties</label><input id="aantal_installaties" type="number" name="aantal_installaties" class="form-control" value="<?= htmlspecialchars($verslag['aantal_installaties'] ?? '') ?>"></div>
+                <div class="col-md-6"><label for="parkeren" class="form-label">Parkeerrestricties</label><input id="parkeren" type="text" name="parkeren" class="form-control" value="<?= htmlspecialchars($verslag['parkeren'] ?? '') ?>"></div>
+                <div class="col-md-6"><label for="toegang" class="form-label">Toegangsprocedures</label><input id="toegang" type="text" name="toegang" class="form-control" value="<?= htmlspecialchars($verslag['toegang'] ?? '') ?>"></div>
+                <div class="col-md-6"><label for="boortijden" class="form-label">Boortijden / geluidsrestricties</label><input id="boortijden" type="text" name="boortijden" class="form-control" value="<?= htmlspecialchars($verslag['boortijden'] ?? '') ?>"></div>
+                <div class="col-md-6"><label for="opleverdatum" class="form-label">Gewenste opleverdatum</label><input id="opleverdatum" type="date" name="opleverdatum" class="form-control" value="<?= htmlspecialchars($verslag['opleverdatum'] ?? '') ?>" min="<?= $today ?>"></div>
             </div>
             <div class="mt-3 text-end"><button type="submit" name="save_section" value="installatie" class="btn btn-primary"><i class="bi bi-save"></i> Opslaan</button></div>
           </div>
