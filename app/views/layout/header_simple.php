@@ -1,7 +1,7 @@
 ﻿<?php
 // app/views/layout/header_simple.php
 
-$brandingConfig = require_once __DIR__ . '/../../../config/branding.php';
+$brandingConfig = \App\Config\Branding::get();
 $primaryColor = $brandingConfig['primary_color'] ?? '#FFD200';
 $primaryColorContrast = $brandingConfig['primary_color_contrast'] ?? '#111111';
 

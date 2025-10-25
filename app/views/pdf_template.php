@@ -72,7 +72,7 @@ $pdfPublicPath = __DIR__ . '/../../public/';
     <meta charset="UTF-8">
     <title>Bezoekverslag: <?= htmlspecialchars($verslag['klantnaam'] ?? '') ?> - <?= htmlspecialchars($verslag['projecttitel'] ?? '') ?></title>
     <?php
-      $brandingConfig = require_once __DIR__ . '/../../config/branding.php';
+      $brandingConfig = \App\Config\Branding::get();
       $primaryColor = $brandingConfig['primary_color'] ?? '#FFD200';
     ?>
     <style>
