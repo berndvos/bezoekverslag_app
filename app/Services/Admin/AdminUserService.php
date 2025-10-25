@@ -95,105 +95,155 @@ class AdminUserService
         }
         return ['warning', 'Gebruiker aangemaakt, maar kon geen resetlink versturen.'];
     }
+
     public function manageRegistration(PDO $pdo, array $input, array $session): AdminServiceResponse
     {
-        $userId = (int) ($input['user_id'] ?? 0);
+        $userId = (int)($input['user_id'] ?? 0);
         $action = $input['action'] ?? '';
 
-        $response = null;
         if ($userId <= 0 || !in_array($action, ['approve', 'deny'], true)) {
-            $response = new AdminServiceResponse(false, 'Ongeldige actie.', 'danger');
-        } else {
-            $stmt = $pdo->prepare("SELECT id, email, fullname FROM users WHERE id = ? AND status = 'pending'");
-            $stmt->execute([$userId]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$user) {
-                $response = new AdminServiceResponse(false, 'Gebruiker niet gevonden of al verwerkt.', 'warning');
-            } else {
-                if ($action === 'approve') {
-                    $stmt = $pdo->prepare(
-                        "UPDATE users SET status = 'active', approved_at = NOW(), approved_by = ? WHERE id = ?"
-                    );
-                    $stmt->execute([$session['user_id'] ?? null, $userId]);
-
-                    if (function_exists('log_action')) {
-                        $approver = is_array($session) && isset($session['email']) ? $session['email'] : 'onbekend';
-                        log_action(
-                            'user_approved',
-                            'Gebruiker \'' . $user['email'] . '\' (ID: ' . $userId . ') goedgekeurd door \'' . $approver . '\'.'
-                        );
-                    }
-
-                    (new AuthController())->sendApprovalEmail($user);
-                    $response = new AdminServiceResponse(true, "Gebruiker {$user['email']} is goedgekeurd en kan nu inloggen.", 'success');
-                } else {
-                    $stmt = $pdo->prepare('DELETE FROM users WHERE id = ?');
-                    $stmt->execute([$userId]);
-
-                    if (function_exists('log_action')) {
-                        $approver = is_array($session) && isset($session['email']) ? $session['email'] : 'onbekend';
-                        log_action(
-                            'user_denied',
-                            'Registratie voor \'' . $user['email'] . '\' (ID: ' . $userId . ') afgewezen door \'' . $approver . '\'.'
-                        );
-                    }
-
-                    $response = new AdminServiceResponse(true, "Registratie voor {$user['email']} is afgewezen en verwijderd.", 'info');
-                }
-            }
+            return new AdminServiceResponse(false, 'Ongeldige actie.', 'danger');
         }
 
-        return $response ?? new AdminServiceResponse(false, 'Onbekende fout bij verwerken registratie.', 'danger');
+        $user = $this->findPendingUserById($pdo, $userId);
+
+        if (!$user) {
+            return new AdminServiceResponse(false, 'Gebruiker niet gevonden of al verwerkt.', 'warning');
+        }
+
+        if ($action === 'approve') {
+            return $this->approveUser($pdo, $user, $session);
+        }
+
+        // The only other valid action is 'deny'
+        return $this->denyUser($pdo, $user, $session);
     }
+
+    private function findPendingUserById(PDO $pdo, int $userId): ?array
+    {
+        $stmt = $pdo->prepare("SELECT id, email, fullname FROM users WHERE id = ? AND status = 'pending'");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $user ?: null;
+    }
+
+    private function approveUser(PDO $pdo, array $user, array $session): AdminServiceResponse
+    {
+        $stmt = $pdo->prepare(
+            "UPDATE users SET status = 'active', approved_at = NOW(), approved_by = ? WHERE id = ?"
+        );
+        $stmt->execute([$session['user_id'] ?? null, $user['id']]);
+
+        if (function_exists('log_action')) {
+            $approver = $session['email'] ?? 'onbekend';
+            log_action(
+                'user_approved',
+                "Gebruiker '{$user['email']}' (ID: {$user['id']}) goedgekeurd door '{$approver}'."
+            );
+        }
+
+        (new AuthController())->sendApprovalEmail($user);
+        return new AdminServiceResponse(true, "Gebruiker {$user['email']} is goedgekeurd en kan nu inloggen.", 'success');
+    }
+
+    private function denyUser(PDO $pdo, array $user, array $session): AdminServiceResponse
+    {
+        $stmt = $pdo->prepare('DELETE FROM users WHERE id = ?');
+        $stmt->execute([$user['id']]);
+
+        if (function_exists('log_action')) {
+            $approver = $session['email'] ?? 'onbekend';
+            log_action(
+                'user_denied',
+                "Registratie voor '{$user['email']}' (ID: {$user['id']}) afgewezen door '{$approver}'."
+            );
+        }
+
+        return new AdminServiceResponse(true, "Registratie voor {$user['email']} is afgewezen en verwijderd.", 'info');
+    }
+
     public function updateUser(PDO $pdo, array $input): AdminServiceResponse
     {
-        $id = (int) ($input['user_id'] ?? 0);
+        $validation = $this->validateUpdateInput($input);
+        if (!$validation->success) {
+            return $validation;
+        }
+        $validatedData = $validation->data;
+
+        $passwordResponse = $this->handlePasswordUpdate($validatedData['new_password'], $validatedData['new_password_repeat']);
+        if (!$passwordResponse->success) {
+            return $passwordResponse;
+        }
+        $passwordData = $passwordResponse->data;
+
+        $params = [
+            'fullname' => $validatedData['fullname'],
+            'email' => $validatedData['email'],
+            'role' => $validatedData['role'],
+            'id' => $validatedData['id'],
+        ];
+        $sql = "UPDATE users SET fullname = :fullname, email = :email, role = :role, updated_at = NOW()";
+
+        if ($passwordData['password_param'] !== null) {
+            $sql .= $passwordData['password_sql'];
+            $params['password'] = $passwordData['password_param'];
+        }
+
+        $sql .= ' WHERE id = :id';
+        $stmt = $pdo->prepare($sql);
+
+        if (!$stmt->execute($params)) {
+            return new AdminServiceResponse(false, 'Bijwerken van gebruiker is mislukt.', 'danger');
+        }
+
+        if (function_exists('log_action')) {
+            log_action('user_updated', "Gebruiker '{$validatedData['email']}' bijgewerkt.");
+        }
+
+        return new AdminServiceResponse(true, 'Gebruiker succesvol bijgewerkt.', 'success');
+    }
+
+    private function validateUpdateInput(array $input): AdminServiceResponse
+    {
+        $id = (int)($input['user_id'] ?? 0);
         $fullname = trim($input['fullname'] ?? '');
         $email = trim($input['email'] ?? '');
         $role = $input['role'] ?? '';
-        $newPassword = $input['new_password'] ?? '';
-        $newPasswordRepeat = $input['new_password_repeat'] ?? '';
 
-        $response = null;
         if ($id <= 0 || $fullname === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || $role === '') {
-            $response = new AdminServiceResponse(false, 'Onvolledige of ongeldige invoer.', 'danger');
-        } else {
-            $params = [
-                'fullname' => $fullname,
-                'email' => $email,
-                'role' => $role,
-                'id' => $id,
-            ];
-
-            $sql = "UPDATE users SET fullname = :fullname, email = :email, role = :role, updated_at = NOW()";
-
-            if ($newPassword !== '') {
-                if ($newPassword !== $newPasswordRepeat) {
-                    $response = new AdminServiceResponse(false, 'De nieuwe wachtwoorden komen niet overeen.', 'danger');
-                } elseif (strlen($newPassword) < 8) {
-                    $response = new AdminServiceResponse(false, 'Nieuw wachtwoord moet minimaal 8 tekens bevatten.', 'danger');
-                } else {
-                    $params['password'] = password_hash($newPassword, PASSWORD_DEFAULT);
-                    $sql .= ', password = :password';
-                }
-            }
-
-            if ($response === null) {
-                $sql .= ' WHERE id = :id';
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute($params);
-
-                if (function_exists('log_action')) {
-                    log_action('user_updated', "Gebruiker '{$email}' bijgewerkt.");
-                }
-
-                $response = new AdminServiceResponse(true, 'Gebruiker succesvol bijgewerkt.', 'success');
-            }
+            return new AdminServiceResponse(false, 'Onvolledige of ongeldige invoer.', 'danger');
         }
 
-        return $response ?? new AdminServiceResponse(false, 'Bijwerken van gebruiker is mislukt.', 'danger');
+        return new AdminServiceResponse(true, '', 'info', [
+            'id' => $id,
+            'fullname' => $fullname,
+            'email' => $email,
+            'role' => $role,
+            'new_password' => $input['new_password'] ?? '',
+            'new_password_repeat' => $input['new_password_repeat'] ?? '',
+        ]);
     }
+
+    private function handlePasswordUpdate(string $newPassword, string $newPasswordRepeat): AdminServiceResponse
+    {
+        if ($newPassword === '') {
+            return new AdminServiceResponse(true, '', 'info', ['password_sql' => '', 'password_param' => null]);
+        }
+
+        if ($newPassword !== $newPasswordRepeat) {
+            return new AdminServiceResponse(false, 'De nieuwe wachtwoorden komen niet overeen.', 'danger');
+        }
+
+        if (strlen($newPassword) < 8) {
+            return new AdminServiceResponse(false, 'Nieuw wachtwoord moet minimaal 8 tekens bevatten.', 'danger');
+        }
+
+        return new AdminServiceResponse(true, '', 'info', [
+            'password_sql' => ', password = :password',
+            'password_param' => password_hash($newPassword, PASSWORD_DEFAULT),
+        ]);
+    }
+
     public function sendPasswordSetupLink(PDO $pdo, array $user): bool
     {
         if (empty($user['id']) || empty($user['email'])) {
