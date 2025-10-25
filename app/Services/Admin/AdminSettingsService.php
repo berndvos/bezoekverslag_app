@@ -22,7 +22,7 @@ class AdminSettingsService
 
     public function getBrandingSettings(): array
     {
-        $configFile = $this->configDir . DIRECTORY_SEPARATOR . 'branding.php';
+        $configFile = $this->configDir . DIRECTORY_SEPARATOR . 'branding-settings.php';
         // via App\Config class
         return Branding::get();
     }
@@ -44,7 +44,7 @@ class AdminSettingsService
     public function saveBrandingSettings(array $input): AdminServiceResponse
     {
         $currentSettings = $this->getBrandingSettings();
-        $configFile = $this->configDir . DIRECTORY_SEPARATOR . 'branding.php';
+        $configFile = $this->configDir . DIRECTORY_SEPARATOR . 'branding-settings.php';
 
         $newSettings = [
             'logo_path' => $currentSettings['logo_path'] ?? '',
@@ -85,7 +85,7 @@ class AdminSettingsService
             return new AdminServiceResponse(false, 'Fout bij het uploaden van het logo.', 'danger');
         }
 
-        $configFile = $this->configDir . DIRECTORY_SEPARATOR . 'branding.php';
+        $configFile = $this->configDir . DIRECTORY_SEPARATOR . 'branding-settings.php';
         $newSettings = $currentSettings;
         $newSettings['logo_path'] = 'uploads/branding/' . $safeName;
         $content = self::CONFIG_FILE_HEADER . \var_export($newSettings, true) . ";\n";

@@ -24,7 +24,7 @@ private const REDIRECT_ADMIN = 'Location: ?page=admin';
     private const REDIRECT_ADMIN_TRASH = 'Location: ?page=admin#prullenbak';
     private const REDIRECT_ADMIN_SMTP = 'Location: ?page=admin#smtp';
     private const HEADER_JSON = 'Content-Type: application/json';
-    private const BRANDING_CONFIG_RELATIVE_PATH = '/../../config/branding.php';
+    private const BRANDING_CONFIG_RELATIVE_PATH = '/../../config/branding-settings.php';
     private const PUBLIC_UPLOADS_PATH = '/../../public/uploads';
     private const REDIRECT_LOGIN = 'Location: ?page=login';
 
@@ -1026,7 +1026,7 @@ private const REDIRECT_ADMIN = 'Location: ?page=admin';
             $_SESSION['role'] = $originalUser['role'];
 
             // Log de actie nu de originele sessie hersteld is
-            log_action('impersonate_stop', "Admin '{$_SESSION['email']}' heeft de overname van '{$impersonatedEmail}' be+âãÆ+åÔÇÖ+âÔÇá+óÔé¼Ôäó+âãÆ+óÔé¼+í+âÔÇÜ+é-½indigd.");
+            log_action('impersonate_stop', "Admin '{$_SESSION['email']}' heeft de overname van '{$impersonatedEmail}' be+ï¿½ï¿½ï¿½+ï¿½ï¿½ï¿½ï¿½+ï¿½ï¿½ï¿½ï¿½+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½+ï¿½ï¿½ï¿½+ï¿½ï¿½ï¿½+ï¿½+ï¿½ï¿½ï¿½ï¿½+ï¿½-ï¿½indigd.");
         }
         header(self::REDIRECT_ADMIN);
         exit;
