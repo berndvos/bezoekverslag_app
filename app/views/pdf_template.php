@@ -144,9 +144,9 @@ $pdfPublicPath = __DIR__ . '/../../public/';
 
             <div class="cover-details">
                 <table>
-                    <tr><td class="label">Klant:</td><td><?= hval($verslag, 'klantnaam') ?></td></tr>
-                    <tr><td class="label">Project:</td><td><?= hval($verslag, 'projecttitel') ?></td></tr>
-                    <tr><td class="label">Accountmanager:</td><td><?= hval($verslag, 'accountmanager_naam') ?></td></tr>
+                    <tr><th scope="row" class="label">Klant:</th><td><?= hval($verslag, 'klantnaam') ?></td></tr>
+                    <tr><th scope="row" class="label">Project:</th><td><?= hval($verslag, 'projecttitel') ?></td></tr>
+                    <tr><th scope="row" class="label">Accountmanager:</th><td><?= hval($verslag, 'accountmanager_naam') ?></td></tr>
                 </table>
             </div>
 
@@ -160,24 +160,24 @@ $pdfPublicPath = __DIR__ . '/../../public/';
 
         <!-- INHOUD VANAF PAGINA 2 -->
         <table class="info-table" style="margin-bottom: 30px;">
-            <tr><td class="label">Klant:</td><td><?= hval($verslag, 'klantnaam') ?></td></tr>
-            <tr><td class="label">Project:</td><td><?= hval($verslag, 'projecttitel') ?></td></tr>
-            <tr><td class="label">Datum generatie:</td><td><?= date('d-m-Y') ?></td></tr>
-            <tr><td class="label">Versie:</td><td>V<?= (int)($verslag['pdf_version'] ?? 0) + 1 ?></td></tr>
+            <tr><th scope="row" class="label">Klant:</th><td><?= hval($verslag, 'klantnaam') ?></td></tr>
+            <tr><th scope="row" class="label">Project:</th><td><?= hval($verslag, 'projecttitel') ?></td></tr>
+            <tr><th scope="row" class="label">Datum generatie:</th><td><?= date('d-m-Y') ?></td></tr>
+            <tr><th scope="row" class="label">Versie:</th><td>V<?= (int)($verslag['pdf_version'] ?? 0) + 1 ?></td></tr>
         </table>
 
         <h2>Relatiegegevens</h2>
         <table class="info-table">
-            <tr><td class="label">Adres:</td><td><?= htmlspecialchars(trim(hval($verslag, 'straatnaam') . ' ' . hval($verslag, 'huisnummer') . ' ' . hval($verslag, 'huisnummer_toevoeging'))) ?></td></tr>
-            <tr><td class="label">Postcode/Plaats:</td><td><?= hval($verslag, 'postcode') ?> <?= hval($verslag, 'plaats') ?></td></tr>
-            <tr><td class="label">KvK / BTW:</td><td><?= hval($verslag, 'kvk') ?> / <?= hval($verslag, 'btw') ?></td></tr>
+            <tr><th scope="row" class="label">Adres:</th><td><?= htmlspecialchars(trim(hval($verslag, 'straatnaam') . ' ' . hval($verslag, 'huisnummer') . ' ' . hval($verslag, 'huisnummer_toevoeging'))) ?></td></tr>
+            <tr><th scope="row" class="label">Postcode/Plaats:</th><td><?= hval($verslag, 'postcode') ?> <?= hval($verslag, 'plaats') ?></td></tr>
+            <tr><th scope="row" class="label">KvK / BTW:</th><td><?= hval($verslag, 'kvk') ?> / <?= hval($verslag, 'btw') ?></td></tr>
         </table>
 
         <h2>Contactpersoon</h2>
         <table class="info-table">
-            <tr><td class="label">Naam:</td><td><?= hval($verslag, 'contact_naam') ?></td></tr>
-            <tr><td class="label">Functie:</td><td><?= hval($verslag, 'contact_functie') ?></td></tr>
-            <tr><td class="label">E-mail / Telefoon:</td><td><?= hval($verslag, 'contact_email') ?> / <?= hval($verslag, 'contact_tel') ?></td></tr>
+            <tr><th scope="row" class="label">Naam:</th><td><?= hval($verslag, 'contact_naam') ?></td></tr>
+            <tr><th scope="row" class="label">Functie:</th><td><?= hval($verslag, 'contact_functie') ?></td></tr>
+            <tr><th scope="row" class="label">E-mail / Telefoon:</th><td><?= hval($verslag, 'contact_email') ?> / <?= hval($verslag, 'contact_tel') ?></td></tr>
         </table>
 
         <h2>Wensen</h2>
@@ -190,38 +190,38 @@ $pdfPublicPath = __DIR__ . '/../../public/';
 
         <h2>Eisen</h2>
         <table class="info-table">
-            <tr><td class="label">Beeldkwaliteit:</td><td><?= hval($verslag, 'beeldkwaliteitseisen') ?></td></tr>
-            <tr><td class="label">Geluid:</td><td><?= hval($verslag, 'geluidseisen') ?></td></tr>
-            <tr><td class="label">Bediening:</td><td><?= hval($verslag, 'bedieningseisen') ?></td></tr>
-            <tr><td class="label">Beveiliging:</td><td><?= hval($verslag, 'beveiligingseisen') ?></td></tr>
-            <tr><td class="label">Netwerk:</td><td><?= hval($verslag, 'netwerkeisen') ?></td></tr>
-            <tr><td class="label">Garantie/onderhoud:</td><td><?= hval($verslag, 'garantie') ?></td></tr>
+            <tr><th scope="row" class="label">Beeldkwaliteit:</th><td><?= hval($verslag, 'beeldkwaliteitseisen') ?></td></tr>
+            <tr><th scope="row" class="label">Geluid:</th><td><?= hval($verslag, 'geluidseisen') ?></td></tr>
+            <tr><th scope="row" class="label">Bediening:</th><td><?= hval($verslag, 'bedieningseisen') ?></td></tr>
+            <tr><th scope="row" class="label">Beveiliging:</th><td><?= hval($verslag, 'beveiligingseisen') ?></td></tr>
+            <tr><th scope="row" class="label">Netwerk:</th><td><?= hval($verslag, 'netwerkeisen') ?></td></tr>
+            <tr><th scope="row" class="label">Garantie/onderhoud:</th><td><?= hval($verslag, 'garantie') ?></td></tr>
         </table>
 
         <h2>Installatie</h2>
         <?php if (($verslag['installatie_adres_afwijkend'] ?? 'Nee') === 'Ja'): ?>
             <h3>Afwijkend Installatieadres</h3>
             <table class="info-table">
-                <tr><td class="label">Adres:</td><td><?= htmlspecialchars(trim(hval($verslag, 'installatie_adres_straat') . ' ' . hval($verslag, 'installatie_adres_huisnummer') . ' ' . hval($verslag, 'installatie_adres_huisnummer_toevoeging'))) ?></td></tr>
-                <tr><td class="label">Postcode/Plaats:</td><td><?= hval($verslag, 'installatie_adres_postcode') ?> <?= hval($verslag, 'installatie_adres_plaats') ?></td></tr>
+                <tr><th scope="row" class="label">Adres:</th><td><?= htmlspecialchars(trim(hval($verslag, 'installatie_adres_straat') . ' ' . hval($verslag, 'installatie_adres_huisnummer') . ' ' . hval($verslag, 'installatie_adres_huisnummer_toevoeging'))) ?></td></tr>
+                <tr><th scope="row" class="label">Postcode/Plaats:</th><td><?= hval($verslag, 'installatie_adres_postcode') ?> <?= hval($verslag, 'installatie_adres_plaats') ?></td></tr>
             </table>
         <?php endif; ?>
         <?php if (($verslag['cp_locatie_afwijkend'] ?? 'Nee') === 'Ja'): ?>
             <h3>Contactpersoon op Locatie</h3>
             <table class="info-table">
-                <tr><td class="label">Naam:</td><td><?= hval($verslag, 'cp_locatie_naam') ?></td></tr>
-                <tr><td class="label">E-mail / Telefoon:</td><td><?= hval($verslag, 'cp_locatie_email') ?> / <?= hval($verslag, 'cp_locatie_tel') ?></td></tr>
+                <tr><th scope="row" class="label">Naam:</th><td><?= hval($verslag, 'cp_locatie_naam') ?></td></tr>
+                <tr><th scope="row" class="label">E-mail / Telefoon:</th><td><?= hval($verslag, 'cp_locatie_email') ?> / <?= hval($verslag, 'cp_locatie_tel') ?></td></tr>
             </table>
         <?php endif; ?>
         <table class="info-table">
-            <tr><td class="label">Afvoer oude apparatuur:</td><td><?= hval($verslag, 'afvoer') ?></td></tr>
-            <tr><td class="label">Gewenste installatiedatum:</td><td><?= hval($verslag, 'installatiedatum') ?></td></tr>
-            <tr><td class="label">Locatie apparatuur:</td><td><?= hval($verslag, 'locatie_apparatuur') ?></td></tr>
-            <tr><td class="label">Aantal installaties:</td><td><?= hval($verslag, 'aantal_installaties') ?></td></tr>
-            <tr><td class="label">Parkeerrestricties:</td><td><?= hval($verslag, 'parkeren') ?></td></tr>
-            <tr><td class="label">Toegangsprocedures:</td><td><?= hval($verslag, 'toegang') ?></td></tr>
-            <tr><td class="label">Boortijden / geluidsrestricties:</td><td><?= hval($verslag, 'boortijden') ?></td></tr>
-            <tr><td class="label">Gewenste opleverdatum:</td><td><?= hval($verslag, 'opleverdatum') ?></td></tr>
+            <tr><th scope="row" class="label">Afvoer oude apparatuur:</th><td><?= hval($verslag, 'afvoer') ?></td></tr>
+            <tr><th scope="row" class="label">Gewenste installatiedatum:</th><td><?= hval($verslag, 'installatiedatum') ?></td></tr>
+            <tr><th scope="row" class="label">Locatie apparatuur:</th><td><?= hval($verslag, 'locatie_apparatuur') ?></td></tr>
+            <tr><th scope="row" class="label">Aantal installaties:</th><td><?= hval($verslag, 'aantal_installaties') ?></td></tr>
+            <tr><th scope="row" class="label">Parkeerrestricties:</th><td><?= hval($verslag, 'parkeren') ?></td></tr>
+            <tr><th scope="row" class="label">Toegangsprocedures:</th><td><?= hval($verslag, 'toegang') ?></td></tr>
+            <tr><th scope="row" class="label">Boortijden / geluidsrestricties:</th><td><?= hval($verslag, 'boortijden') ?></td></tr>
+            <tr><th scope="row" class="label">Gewenste opleverdatum:</th><td><?= hval($verslag, 'opleverdatum') ?></td></tr>
         </table>
 
         <?php if (!empty($ruimtes)): ?>
