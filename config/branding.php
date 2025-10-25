@@ -3,9 +3,14 @@ namespace App\Config;
 
 final class Branding
 {
+    private static ?array $settings = null;
+
     public static function get(): array
     {
-        $file = __DIR__ . DIRECTORY_SEPARATOR . 'branding-settings.php';
-        return \file_exists($file) ? require $file : [];
+        if (self::$settings === null) {
+            $file = __DIR__ . DIRECTORY_SEPARATOR . 'branding-settings.php';
+            self::$settings = \file_exists($file) ? require $file : [];
+        }
+        return self::$settings;
     }
 }
