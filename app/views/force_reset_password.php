@@ -14,13 +14,13 @@
     <form method="post">
       <?= csrf_field() ?>
       <div class="mb-3">
-        <label class="form-label">Nieuw wachtwoord</label>
-        <input type="password" name="password" class="form-control" required minlength="8" autofocus>
+        <label for="password" class="form-label">Nieuw wachtwoord</label>
+        <input type="password" name="password" id="password" class="form-control" required minlength="8" autofocus>
         <small class="text-muted">Minimaal 8 tekens.</small>
       </div>
       <div class="mb-3">
-        <label class="form-label">Herhaal nieuw wachtwoord</label>
-        <input type="password" name="password_repeat" class="form-control" required>
+        <label for="password_repeat" class="form-label">Herhaal nieuw wachtwoord</label>
+        <input type="password" name="password_repeat" id="password_repeat" class="form-control" required>
       </div>
       <button type="submit" class="btn btn-primary w-100">Wachtwoord opslaan en doorgaan</button>
     </form>

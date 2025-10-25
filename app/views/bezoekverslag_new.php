@@ -8,18 +8,18 @@
         <?= csrf_field() ?>
         <div class="row g-3">
             <div class="col-md-12">
-                <label class="form-label">Naam bezoekverslag <span class="text-danger">*</span></label>
-                <input type="text" name="naam" class="form-control" placeholder="Bijv. Bezoek Gemeente Utrecht" required>
+                <label for="naam" class="form-label">Naam bezoekverslag <span class="text-danger">*</span></label>
+                <input type="text" name="naam" id="naam" class="form-control" placeholder="Bijv. Bezoek Gemeente Utrecht" required>
             </div>
 
             <div class="col-md-6">
-                <label class="form-label">Klantnaam <span class="text-danger">*</span></label>
-                <input type="text" name="klantnaam" class="form-control" placeholder="Bijv. Gemeente Utrecht" required>
+                <label for="klantnaam" class="form-label">Klantnaam <span class="text-danger">*</span></label>
+                <input type="text" name="klantnaam" id="klantnaam" class="form-control" placeholder="Bijv. Gemeente Utrecht" required>
             </div>
 
             <div class="col-md-6">
-                <label class="form-label">Projecttitel</label>
-                <input type="text" name="projecttitel" class="form-control" placeholder="Bijv. Raadszaal AV-installatie">
+                <label for="projecttitel" class="form-label">Projecttitel</label>
+                <input type="text" name="projecttitel" id="projecttitel" class="form-control" placeholder="Bijv. Raadszaal AV-installatie">
             </div>
         </div>
 

@@ -61,28 +61,28 @@
                         <div class="modal-body">
                           <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
                           <div class="mb-3">
-                            <label class="form-label">Volledige naam</label>
-                            <input type="text" name="fullname" class="form-control" value="<?= htmlspecialchars($u['fullname']) ?>" required>
+                            <label for="edit-fullname-<?= $u['id'] ?>" class="form-label">Volledige naam</label>
+                            <input type="text" name="fullname" id="edit-fullname-<?= $u['id'] ?>" class="form-control" value="<?= htmlspecialchars($u['fullname']) ?>" required>
                           </div>
                           <div class="mb-3">
-                            <label class="form-label">E-mailadres</label>
-                            <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($u['email']) ?>" required>
+                            <label for="edit-email-<?= $u['id'] ?>" class="form-label">E-mailadres</label>
+                            <input type="email" name="email" id="edit-email-<?= $u['id'] ?>" class="form-control" value="<?= htmlspecialchars($u['email']) ?>" required>
                           </div>
                           <div class="mb-3">
-                            <label class="form-label">Rol</label>
-                            <select name="role" class="form-select">
+                            <label for="edit-role-<?= $u['id'] ?>" class="form-label">Rol</label>
+                            <select name="role" id="edit-role-<?= $u['id'] ?>" class="form-select">
                               <option value="viewer" <?= $u['role'] === 'viewer' ? 'selected' : '' ?>>Viewer</option>
                               <option value="accountmanager" <?= $u['role'] === 'accountmanager' ? 'selected' : '' ?>>Accountmanager</option>
                               <option value="admin" <?= $u['role'] === 'admin' ? 'selected' : '' ?>>Admin</option>
                             </select>
                           </div>
                           <div class="mb-3">
-                            <label class="form-label">Nieuw wachtwoord (optioneel)</label>
-                            <input type="password" name="new_password" class="form-control" placeholder="Laat leeg om niet te wijzigen" minlength="8">
+                            <label for="edit-new_password-<?= $u['id'] ?>" class="form-label">Nieuw wachtwoord (optioneel)</label>
+                            <input type="password" name="new_password" id="edit-new_password-<?= $u['id'] ?>" class="form-control" placeholder="Laat leeg om niet te wijzigen" minlength="8">
                           </div>
                           <div class="mb-3">
-                            <label class="form-label">Herhaal nieuw wachtwoord</label>
-                            <input type="password" name="new_password_repeat" class="form-control" placeholder="Herhaal wachtwoord">
+                            <label for="edit-new_password_repeat-<?= $u['id'] ?>" class="form-label">Herhaal nieuw wachtwoord</label>
+                            <input type="password" name="new_password_repeat" id="edit-new_password_repeat-<?= $u['id'] ?>" class="form-control" placeholder="Herhaal wachtwoord">
                           </div>
                         </div>
                         <div class="modal-footer">
@@ -111,16 +111,16 @@
         <?= csrf_field() ?>
         <div class="row g-3">
           <div class="col-md-6">
-            <label class="form-label">Volledige naam</label>
-            <input type="text" name="fullname" class="form-control" placeholder="Bijv. Jan Jansen" required>
+            <label for="new-fullname" class="form-label">Volledige naam</label>
+            <input type="text" name="fullname" id="new-fullname" class="form-control" placeholder="Bijv. Jan Jansen" required>
           </div>
           <div class="col-md-6">
-            <label class="form-label">E-mailadres</label>
-            <input type="email" name="email" class="form-control" placeholder="naam@bedrijf.nl" required>
+            <label for="new-email" class="form-label">E-mailadres</label>
+            <input type="email" name="email" id="new-email" class="form-control" placeholder="naam@bedrijf.nl" required>
           </div>
           <div class="col-md-6">
-            <label class="form-label">Rol</label>
-            <select name="role" class="form-select" required>
+            <label for="new-role" class="form-label">Rol</label>
+            <select name="role" id="new-role" class="form-select" required>
               <option value="">Kies rol...</option>
               <option value="viewer">Viewer (alleen lezen/download)</option>
               <option value="accountmanager">Accountmanager</option>

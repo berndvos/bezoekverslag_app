@@ -11,13 +11,13 @@
     <form method="post" novalidate>
       <?= csrf_field() ?>
       <div class="mb-3">
-        <label class="form-label">E-mailadres</label>
-        <input type="email" name="email" class="form-control" required placeholder="naam@bedrijf.nl">
+        <label for="email" class="form-label">E-mailadres</label>
+        <input type="email" name="email" id="email" class="form-control" required placeholder="naam@bedrijf.nl">
       </div>
 
       <div class="mb-3">
-        <label class="form-label">Wachtwoord</label>
-        <input type="password" name="password" class="form-control" required placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
+        <label for="password" class="form-label">Wachtwoord</label>
+        <input type="password" name="password" id="password" class="form-control" required placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
       </div>
 
       <div class="form-check mb-3">
