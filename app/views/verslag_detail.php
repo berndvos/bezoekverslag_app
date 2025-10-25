@@ -40,43 +40,43 @@
           <div class="card-body">
             <div class="row g-3">
               <div class="col-md-6">
-                <label class="form-label">Klantnaam *</label>
-                <input type="text" name="klantnaam" class="form-control" required value="<?= htmlspecialchars($verslag['klantnaam'] ?? '') ?>">
+                <label for="klantnaam" class="form-label">Klantnaam *</label>
+                <input id="klantnaam" type="text" name="klantnaam" class="form-control" required value="<?= htmlspecialchars($verslag['klantnaam'] ?? '') ?>">
               </div>
               <div class="col-md-6">
-                <label class="form-label">Projecttitel</label>
-                <input type="text" name="projecttitel" class="form-control" value="<?= htmlspecialchars($verslag['projecttitel'] ?? '') ?>">
+                <label for="projecttitel" class="form-label">Projecttitel</label>
+                <input id="projecttitel" type="text" name="projecttitel" class="form-control" value="<?= htmlspecialchars($verslag['projecttitel'] ?? '') ?>">
               </div>
               <div class="col-md-3">
-                <label class="form-label">Postcode <span id="postcode-spinner-relatie" class="spinner-border spinner-border-sm text-primary ms-1" role="status" style="display: none;"></span></label>
-                <input type="text" name="postcode" class="form-control postcode-lookup" 
+                <label for="postcode" class="form-label">Postcode <span id="postcode-spinner-relatie" class="spinner-border spinner-border-sm text-primary ms-1" role="status" style="display: none;"></span></label>
+                <input id="postcode" type="text" name="postcode" class="form-control postcode-lookup" 
                        value="<?= htmlspecialchars($verslag['postcode'] ?? '') ?>"
                        data-prefix="relatie"
                        placeholder="1234AB">
               </div>
               <div class="col-md-3">
-                <label class="form-label">Huisnummer</label>
-                <input type="text" name="huisnummer" class="form-control" value="<?= htmlspecialchars($verslag['huisnummer'] ?? '') ?>">
+                <label for="huisnummer" class="form-label">Huisnummer</label>
+                <input id="huisnummer" type="text" name="huisnummer" class="form-control" value="<?= htmlspecialchars($verslag['huisnummer'] ?? '') ?>">
               </div>
               <div class="col-md-3">
-                <label class="form-label">Toevoeging</label>
-                <input type="text" name="huisnummer_toevoeging" class="form-control" value="<?= htmlspecialchars($verslag['huisnummer_toevoeging'] ?? '') ?>">
+                <label for="huisnummer_toevoeging" class="form-label">Toevoeging</label>
+                <input id="huisnummer_toevoeging" type="text" name="huisnummer_toevoeging" class="form-control" value="<?= htmlspecialchars($verslag['huisnummer_toevoeging'] ?? '') ?>">
               </div>
               <div class="col-md-6">
-                <label class="form-label">Straatnaam</label>
-                <input type="text" name="straatnaam" class="form-control" value="<?= htmlspecialchars($verslag['straatnaam'] ?? '') ?>">
+                <label for="straatnaam" class="form-label">Straatnaam</label>
+                <input id="straatnaam" type="text" name="straatnaam" class="form-control" value="<?= htmlspecialchars($verslag['straatnaam'] ?? '') ?>">
               </div>
               <div class="col-md-3">
-                <label class="form-label">Plaats</label>
-                <input type="text" name="plaats" class="form-control" value="<?= htmlspecialchars($verslag['plaats'] ?? '') ?>">
+                <label for="plaats" class="form-label">Plaats</label>
+                <input id="plaats" type="text" name="plaats" class="form-control" value="<?= htmlspecialchars($verslag['plaats'] ?? '') ?>">
               </div>
               <div class="col-md-6">
-                <label class="form-label">KvK-nummer</label>
-                <input type="text" name="kvk" class="form-control" value="<?= htmlspecialchars($verslag['kvk'] ?? '') ?>">
+                <label for="kvk" class="form-label">KvK-nummer</label>
+                <input id="kvk" type="text" name="kvk" class="form-control" value="<?= htmlspecialchars($verslag['kvk'] ?? '') ?>">
               </div>
               <div class="col-md-6">
-                <label class="form-label">BTW-nummer</label>
-                <input type="text" name="btw" class="form-control" value="<?= htmlspecialchars($verslag['btw'] ?? '') ?>">
+                <label for="btw" class="form-label">BTW-nummer</label>
+                <input id="btw" type="text" name="btw" class="form-control" value="<?= htmlspecialchars($verslag['btw'] ?? '') ?>">
               </div>
             </div>
             <div class="mt-3 text-end"><button type="submit" name="save_section" value="relatie" class="btn btn-primary"><i class="bi bi-save"></i> Opslaan</button></div>
