@@ -3,10 +3,10 @@
 namespace App\Controllers;
 
 use App\Config\Database;
+use App\Services\ViewRenderer;
 use PDO;
 use App\Models\Bezoekverslag;
 use App\Models\Ruimte;
-
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -16,12 +16,19 @@ use PHPMailer\PHPMailer\Exception;
  * -----------------
  * Beperkte toegang voor klant (contactpersoon) tot een specifiek bezoekverslag.
  * - Login op basis van client_access (email + wachtwoord)
- * - Kan slechts ÃƒÂ©ÃƒÂ©n verslag zien (id in sessie)
+ * - Kan slechts ��n verslag zien (id in sessie)
  * - Optioneel bewerken van: Wensen & eisen / Installatie / bestaande Ruimtes
  * - Geen nieuwe ruimtes, geen PDF-generatie
  */
 class ClientController {
-    private const REDIRECT_CLIENT_VIEW_PREFIX = 'Location: ?page=client_view&id=';
+
+    private ViewRenderer $view;
+
+    public function __construct()
+    {
+        $this->view = new ViewRenderer();
+    }
+private const REDIRECT_CLIENT_VIEW_PREFIX = 'Location: ?page=client_view&id=';
     private const REDIRECT_CLIENT_LOGIN = 'Location: ?page=client_login';
     private const PUBLIC_UPLOAD_BASE = '/../../public/';
 
@@ -62,7 +69,7 @@ class ClientController {
             }
         }
 
-        include_once __DIR__ . '/../views/client_login.php';
+        $this->view->render('client_login', compact('error'));
     }
 
     /** LOGOUT (publiek) */
@@ -98,7 +105,7 @@ class ClientController {
         $stmt->execute([$verslag_id]);
         $ruimtes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        include_once __DIR__ . '/../views/client_view.php';
+        $this->view->render('client_view', compact('verslag', 'ruimtes'));
     }
 
     /** UPDATE (publiek) Ã¢â‚¬â€œ beperkte updates door klant */
@@ -359,9 +366,4 @@ class ClientController {
             // error_log("Mailer Error: " . $mail->ErrorInfo);
         }
     }
-}
-
-
-
-
-
+}

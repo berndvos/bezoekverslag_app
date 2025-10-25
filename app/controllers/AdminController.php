@@ -1,18 +1,24 @@
-Ôªø<?php
+<?php
 
 namespace App\Controllers;
 
 use App\Config\Database;
+use App\Services\ViewRenderer;
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use PDO;
 use PDOException;
 
-
 class AdminController {
 
-    private const REDIRECT_ADMIN = 'Location: ?page=admin';
+    private ViewRenderer $view;
+
+    public function __construct()
+    {
+        $this->view = new ViewRenderer();
+    }
+private const REDIRECT_ADMIN = 'Location: ?page=admin';
     private const REDIRECT_ADMIN_REGISTRATIONS = 'Location: ?page=admin#registraties';
     private const REDIRECT_ADMIN_MAINTENANCE = 'Location: ?page=admin#onderhoud';
     private const REDIRECT_ADMIN_TRASH = 'Location: ?page=admin#prullenbak';
@@ -49,7 +55,10 @@ class AdminController {
         $smtpSettings = $this->getSmtpSettings();
         $brandingSettings = $this->getBrandingSettings();
 
-        include_once __DIR__ . '/../views/admin.php';
+        $this->view->render('admin', compact(
+            'users', 'pendingUsers', 'logEntries', 'systemStatus', 'clientPortals',
+            'deletedVerslagen', 'emailTemplates', 'smtpSettings', 'brandingSettings'
+        ));
     }
 
     private function ensureSessionStarted(): void {
@@ -884,7 +893,7 @@ class AdminController {
         $clientPortals = $this->getMyClientPortals($pdo);
         $msg = '';
 
-        include_once __DIR__ . '/../views/profile.php';
+        $this->view->render('profile', compact('user', 'mijnVerslagen', 'samenwerkingen', 'clientPortals', 'msg'));
     }
 
     private function isProfileAjaxRequest(): bool {
@@ -1017,7 +1026,7 @@ class AdminController {
             $_SESSION['role'] = $originalUser['role'];
 
             // Log de actie nu de originele sessie hersteld is
-            log_action('impersonate_stop', "Admin '{$_SESSION['email']}' heeft de overname van '{$impersonatedEmail}' be‚îú√¢√£√Ü‚îú√•√î√á√ñ‚îú√¢√î√á√°‚îú√≥√î√©¬º√î√§√≥‚îú√¢√£√Ü‚îú√≥√î√©¬º‚îº√≠‚îú√¢√î√á√ú‚îú√©‚î¨¬Ωindigd.");
+            log_action('impersonate_stop', "Admin '{$_SESSION['email']}' heeft de overname van '{$impersonatedEmail}' be+‚„∆+Â‘«÷+‚‘«·+Û‘Èº‘‰Û+‚„∆+Û‘Èº+Ì+‚‘«‹+È-Ωindigd.");
         }
         header(self::REDIRECT_ADMIN);
         exit;
@@ -1049,9 +1058,3 @@ class AdminController {
         exit;
     }
 }
-
-
-
-
-
-

@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Config\Database;
+use App\Services\ViewRenderer;
 use PDO;
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -10,7 +11,13 @@ use PHPMailer\PHPMailer\Exception;
 
 class AuthController {
 
-    private const REMEMBER_COOKIE_NAME = 'remember_token';
+    private ViewRenderer $view;
+
+    public function __construct()
+    {
+        $this->view = new ViewRenderer();
+    }
+private const REMEMBER_COOKIE_NAME = 'remember_token';
     private const REMEMBER_COOKIE_LIFETIME = 86400 * 30; // 30 dagen
     private const REDIRECT_DASHBOARD = 'Location: ?page=dashboard';
     private const PLACEHOLDER_USER_FULLNAME = '{user_fullname}';
@@ -92,7 +99,7 @@ class AuthController {
             }
         }
 
-        include_once __DIR__ . '/../views/login.php';
+        $this->view->render('login', compact('error'));
     }
 
     /** LOGOUT **/
@@ -123,7 +130,7 @@ class AuthController {
             [$error, $success] = $this->handleRegistrationSubmission($pdo, $_POST);
         }
 
-        include_once __DIR__ . '/../views/register.php';
+        $this->view->render('register', compact('error', 'success'));
         exit;
     }
 
@@ -138,7 +145,7 @@ class AuthController {
             [$error, $msg] = $this->handleForgotPasswordSubmission($pdo, $_POST);
         }
 
-        include_once __DIR__ . '/../views/forgot.php';
+        $this->view->render('forgot', compact('error', 'msg'));
     }
 
     /** RESET WACHTWOORD **/
@@ -154,7 +161,7 @@ class AuthController {
             [$error, $msg] = $this->handleResetSubmission($pdo, $token, $_POST);
         }
 
-        include_once __DIR__ . '/../views/reset.php';
+        $this->view->render('reset', compact('error', 'msg', 'token'));
     }
 
     private function shouldRedirectAuthenticatedSession(): bool {
@@ -438,7 +445,7 @@ class AuthController {
             }
         }
 
-        include_once __DIR__ . '/../views/2fa_verify.php';
+        $this->view->render('2fa_verify', []);
     }
 
     /** Hulpfunctie om de 2FA code e-mail te versturen */
@@ -561,5 +568,4 @@ class AuthController {
 
         return $adminController->sendPublicEmail($user['email'], $user['fullname'], $subject, $body, $mailSettings);
     }
-}
-
+}

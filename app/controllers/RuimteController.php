@@ -3,11 +3,19 @@
 namespace App\Controllers;
 
 use App\Config\Database;
+use App\Services\ViewRenderer;
 use PDO;
 use App\Models\Ruimte;
 
 class RuimteController {
-    private const HEADER_JSON = 'Content-Type: application/json';
+
+    private ViewRenderer $view;
+
+    public function __construct()
+    {
+        $this->view = new ViewRenderer();
+    }
+private const HEADER_JSON = 'Content-Type: application/json';
     private const PUBLIC_PATH = '/../../public/';
     private const REDIRECT_DASHBOARD = 'Location: ?page=dashboard';
     private const REDIRECT_EDIT_PREFIX = 'Location: ?page=bewerk&id=';
@@ -56,7 +64,7 @@ class RuimteController {
             'stroom_extra_v2' => '',
             'stroom_afstand' => ''
         ];
-        include_once __DIR__ . '/../views/ruimte_form.php';
+        $this->view->render('ruimte_form', compact('ruimte'));
     }
 
     /** Nieuwe ruimte opslaan */
@@ -150,7 +158,7 @@ class RuimteController {
         $fotos = $fotoStmt->fetchAll(PDO::FETCH_ASSOC);
 
 
-        include_once __DIR__ . '/../views/ruimte_form.php';
+        $this->view->render('ruimte_form', compact('ruimte', 'fotos'));
     }
 
     /** Ruimte verwijderen */
@@ -305,9 +313,4 @@ class RuimteController {
             }
         }
     }
-}
-
-
-
-
-
+}
