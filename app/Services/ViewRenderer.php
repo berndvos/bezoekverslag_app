@@ -19,7 +19,7 @@ class ViewRenderer
             throw new \RuntimeException("View not found: {$path}");
         }
         extract($data);
-        include $path;
+        include_once $path;
     }
 
     public function renderToString(string $template, array $data = []): string

@@ -8,6 +8,8 @@ use ZipArchive;
 
 class FileService
 {
+    private const SANITIZE_FILENAME_PART_REGEX = '/[^a-zA-Z0-9_-]/';
+
     private function publicBasePath(): string
     {
         // app/Services/Bezoekverslag -> up 3 => project root, then /public/
@@ -38,7 +40,7 @@ class FileService
         $verslagStmt = $pdo->prepare("SELECT klantnaam FROM bezoekverslag WHERE id = ?");
         $verslagStmt->execute([$verslagId]);
         $verslag = $verslagStmt->fetch(PDO::FETCH_ASSOC);
-        $safeKlantnaam = preg_replace('/[^a-zA-Z0-9_-]/', '_', $verslag['klantnaam'] ?? 'project');
+        $safeKlantnaam = preg_replace(self::SANITIZE_FILENAME_PART_REGEX, '_', $verslag['klantnaam'] ?? 'project');
         $zipFilename = 'Projectbestanden_' . $safeKlantnaam . '.zip';
 
         $zip = new ZipArchive();
@@ -78,13 +80,7 @@ class FileService
 
         $pdo = Database::getConnection();
 
-        $stmt = $pdo->prepare("
-            SELECT r.naam AS ruimte_naam, f.pad AS foto_pad
-            FROM ruimte r
-            JOIN foto f ON r.id = f.ruimte_id
-            WHERE r.verslag_id = ?
-            ORDER BY r.naam, f.id
-        ");
+        $stmt = $pdo->prepare("\n            SELECT r.naam AS ruimte_naam, f.pad AS foto_pad\n            FROM ruimte r\n            JOIN foto f ON r.id = f.ruimte_id\n            WHERE r.verslag_id = ?\n            ORDER BY r.naam, f.id\n        ");
         $stmt->execute([$verslagId]);
         $photos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -97,7 +93,7 @@ class FileService
         $verslagStmt = $pdo->prepare("SELECT klantnaam, projecttitel FROM bezoekverslag WHERE id = ?");
         $verslagStmt->execute([$verslagId]);
         $verslag = $verslagStmt->fetch(PDO::FETCH_ASSOC);
-        $safeKlantnaam = preg_replace('/[^a-zA-Z0-9_-]/', '_', $verslag['klantnaam'] ?? 'verslag');
+        $safeKlantnaam = preg_replace(self::SANITIZE_FILENAME_PART_REGEX, '_', $verslag['klantnaam'] ?? 'verslag');
         $zipFilename = 'Fotos_' . $safeKlantnaam . '.zip';
 
         $zip = new ZipArchive();
@@ -110,7 +106,7 @@ class FileService
         $publicBase = $this->publicBasePath();
         $photoCounters = [];
         foreach ($photos as $photo) {
-            $ruimteNaam = preg_replace('/[^a-zA-Z0-9_-]/', '_', $photo['ruimte_naam']);
+            $ruimteNaam = preg_replace(self::SANITIZE_FILENAME_PART_REGEX, '_', $photo['ruimte_naam']);
             $fullPhotoPath = $publicBase . $photo['foto_pad'];
 
             if (file_exists($fullPhotoPath)) {
@@ -209,4 +205,3 @@ class FileService
         $stmt->execute([$verslagId]);
     }
 }
-
