@@ -484,10 +484,9 @@
               </div>
             </div>
             <div class="text-end mt-4 d-flex justify-content-end gap-2">
-                <a href="<?= csrf_url('?page=admin_test_smtp') ?>" class="btn btn-outline-secondary" onclick="return confirm('Let op: de testmail wordt verstuurd met de laatst OPGESLAGEN instellingen. Weet je het zeker?')">
+                <a href="<?= csrf_url('?page=admin_test_smtp') ?>" class="btn btn-outline-secondary" onclick="return confirm('Let op: de testmail wordt verstuurd met de laatst OPGESLAGEN instellingen. Weet je het zeker?')" aria-label="Testmail versturen">
                     <i class="bi bi-send"></i> Testmail versturen
-                </a>
-                <button type="submit" name="update_smtp" value="1" class="btn btn-primary" disabled>
+                </a>                <button type="submit" name="update_smtp" value="1" class="btn btn-primary" disabled>
                     <i class="bi bi-save"></i> SMTP Opslaan
                 </button>
             </div>

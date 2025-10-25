@@ -273,13 +273,13 @@
           <div class="card-body">
             <p class="text-muted small">Geef de contactpersoon toegang tot een vereenvoudigde weergave van dit verslag. De contactpersoon kan inloggen met zijn/haar e-mailadres.</p>
             <div class="form-check form-switch mb-2">
-              <input class="form-check-input" type="checkbox" role="switch" id="clientAccessEnabled" name="client_access_enabled" <?= !empty($clientAccess) ? 'checked' : '' ?>>
+              <input class="form-check-input" type="checkbox" role="switch" id="clientAccessEnabled" name="client_access_enabled" <?= !empty($clientAccess) ? 'checked' : '' ?> aria-checked="<?= !empty($clientAccess) ? 'true' : 'false' ?>">
               <label class="form-check-label" for="clientAccessEnabled">
                 Toegang tot klantportaal inschakelen
               </label>
             </div>
             <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" role="switch" id="clientCanEdit" name="client_can_edit" <?= !empty($clientAccess['can_edit']) ? 'checked' : '' ?>>
+              <input class="form-check-input" type="checkbox" role="switch" id="clientCanEdit" name="client_can_edit" <?= !empty($clientAccess['can_edit']) ? 'checked' : '' ?> aria-checked="<?= !empty($clientAccess['can_edit']) ? 'true' : 'false' ?>">
               <label class="form-check-label" for="clientCanEdit">
                 Klant toestaan om velden aan te vullen (Wensen, Eisen, Installatie, Ruimtes)
               </label>

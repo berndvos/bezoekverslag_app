@@ -81,7 +81,7 @@ $customBrandingStyles = "
               <li class="nav-item"><a class="nav-link" href="?page=admin">Admin</a></li>
             <?php endif; ?>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); this.click();}">
                 <i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['fullname']) ?>
               </a>
               <ul class="dropdown-menu dropdown-menu-end">

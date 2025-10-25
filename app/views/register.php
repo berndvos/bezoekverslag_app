@@ -20,20 +20,20 @@
       <form method="post" action="?page=register" novalidate>
         <?= csrf_field() ?>
         <div class="mb-3">
-          <label class="form-label">Volledige naam</label>
-          <input type="text" name="fullname" class="form-control" required placeholder="Uw volledige naam" value="<?= htmlspecialchars($_POST['fullname'] ?? '') ?>">
+          <label class="form-label" for="reg_fullname">Volledige naam</label>
+          <input type="text" id="reg_fullname" name="fullname" class="form-control" required placeholder="Uw volledige naam" value="<?= htmlspecialchars($_POST['fullname'] ?? '') ?>">
         </div>
         <div class="mb-3">
-          <label class="form-label">E-mailadres</label>
-          <input type="email" name="email" class="form-control" required placeholder="naam@bedrijf.nl" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+          <label class="form-label" for="reg_email">E-mailadres</label>
+          <input type="email" id="reg_email" name="email" class="form-control" required placeholder="naam@bedrijf.nl" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
         </div>
         <div class="mb-3">
-          <label class="form-label">Wachtwoord</label>
-          <input type="password" name="password" class="form-control" required placeholder="Minimaal 8 tekens">
+          <label class="form-label" for="reg_password">Wachtwoord</label>
+          <input type="password" id="reg_password" name="password" class="form-control" required placeholder="Minimaal 8 tekens">
         </div>
         <div class="mb-3">
-          <label class="form-label">Bevestig Wachtwoord</label>
-          <input type="password" name="password_confirm" class="form-control" required placeholder="Herhaal wachtwoord">
+          <label class="form-label" for="reg_password_confirm">Bevestig Wachtwoord</label>
+          <input type="password" id="reg_password_confirm" name="password_confirm" class="form-control" required placeholder="Herhaal wachtwoord">
         </div>
         <button type="submit" class="btn btn-primary w-100 mb-2"><i class="bi bi-check-circle"></i> Registreren</button>
       </form>

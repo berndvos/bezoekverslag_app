@@ -13,8 +13,8 @@
     <form method="post">
       <?= csrf_field() ?>
       <div class="mb-3">
-        <label class="form-label">E-mailadres</label>
-        <input type="email" name="email" class="form-control" required>
+        <label class="form-label" for="forgot_email">E-mailadres</label>
+        <input type="email" id="forgot_email" name="email" class="form-control" required>
       </div>
       <button type="submit" class="btn btn-primary w-100">Resetlink versturen</button>
     </form>

@@ -175,36 +175,36 @@ EOT;
                     <h5 class="mt-4 border-bottom pb-2 mb-3">Database Instellingen</h5>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Database Host</label>
-                            <input type="text" name="db_host" class="form-control" value="localhost" required>
+                            <label class="form-label" for="db_host">Database Host</label>
+                            <input type="text" id="db_host" name="db_host" class="form-control" value="localhost" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Database Naam</label>
-                            <input type="text" name="db_name" class="form-control" placeholder="bezoekverslag_db" required>
+                            <label class="form-label" for="db_name">Database Naam</label>
+                            <input type="text" id="db_name" name="db_name" class="form-control" placeholder="bezoekverslag_db" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Database Gebruiker</label>
-                            <input type="text" name="db_user" class="form-control" placeholder="root" required>
+                            <label class="form-label" for="db_user">Database Gebruiker</label>
+                            <input type="text" id="db_user" name="db_user" class="form-control" placeholder="root" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Database Wachtwoord</label>
-                            <input type="password" name="db_pass" class="form-control">
+                            <label class="form-label" for="db_pass">Database Wachtwoord</label>
+                            <input type="password" id="db_pass" name="db_pass" class="form-control">
                         </div>
                     </div>
 
                     <h5 class="mt-5 border-bottom pb-2 mb-3">Admin Account Aanmaken</h5>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Volledige Naam</label>
-                            <input type="text" name="admin_fullname" class="form-control" placeholder="Admin Gebruiker" required>
+                            <label class="form-label" for="admin_fullname">Volledige Naam</label>
+                            <input type="text" id="admin_fullname" name="admin_fullname" class="form-control" placeholder="Admin Gebruiker" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">E-mailadres</label>
-                            <input type="email" name="admin_email" class="form-control" placeholder="admin@example.com" required>
+                            <label class="form-label" for="admin_email">E-mailadres</label>
+                            <input type="email" id="admin_email" name="admin_email" class="form-control" placeholder="admin@example.com" required>
                         </div>
                         <div class="col-md-12">
-                            <label class="form-label">Wachtwoord</label>
-                            <input type="password" name="admin_password" class="form-control" required minlength="8">
+                            <label class="form-label" for="admin_password">Wachtwoord</label>
+                            <input type="password" id="admin_password" name="admin_password" class="form-control" required minlength="8">
                             <small class="form-text text-muted">Minimaal 8 tekens.</small>
                         </div>
                     </div>

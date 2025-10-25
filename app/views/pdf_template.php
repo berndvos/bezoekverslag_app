@@ -112,7 +112,7 @@ $pdfPublicPath = __DIR__ . '/../../public/';
         <table style="width: 100%; border-collapse: collapse;">
             <tr>
                 <!-- Logo links -->
-                <td style="width: 50%; vertical-align: middle; padding: 0; border: 0;">
+                <th scope="col" style="width: 50%; vertical-align: middle; padding: 0; border: 0;">
                     <?php $logoPath = $brandingConfig['logo_path'] ?? ''; ?>
                     <?php if (!empty($logoPath) && file_exists($pdfPublicPath . $logoPath)): ?>
                         <?php
@@ -122,12 +122,12 @@ $pdfPublicPath = __DIR__ . '/../../public/';
                             echo '<img src="' . $base64 . '" style="max-height: 40px; width: auto;">';
                         ?>
                     <?php endif; ?>
-                </td>
+                </th>
                 <!-- Tekst rechts -->
-                <td style="width: 50%; text-align: right; vertical-align: middle; padding: 0; border: 0;">
+                <th scope="col" style="width: 50%; text-align: right; vertical-align: middle; padding: 0; border: 0;">
                     <h1 style="margin: 0; padding: 0; border-bottom: none; font-size: 18pt;">Bezoekverslag</h1>
                     <div style="font-size: 9pt; color: #555; margin-top: 4px;"><?= htmlspecialchars($verslag['klantnaam'] ?? '') ?> - <?= htmlspecialchars($verslag['projecttitel'] ?? '') ?></div>
-                </td>
+                </th>
             </tr>
         </table>
     </header>

@@ -17,10 +17,10 @@
         <h4 class="text-primary"><i class="bi bi-building"></i> Relatiegegevens</h4>
         <div class="row g-3 mt-1 mb-4">
             <div class="col-md-6">
-                <label class="form-label">Klantnaam *</label>
-                <input type="text" name="klantnaam" value="<?= htmlspecialchars($verslag['klantnaam'] ?? '') ?>" class="form-control" required>
+                <label class="form-label" for="klantnaam">Klantnaam *</label>
+                <input type="text" id="klantnaam" name="klantnaam" value="<?= htmlspecialchars($verslag['klantnaam'] ?? '') ?>" class="form-control" required>
             </div>
             <div class="col-md-6">
-                <label class="form-label">Projecttitel</label>
-                <input type="text" name="projecttitel" value="<?= htmlspecialchars($
+                <label class="form-label" for="projecttitel">Projecttitel</label>
+                <input type="text" id="projecttitel" name="projecttitel" value="<?= htmlspecialchars($verslag['projecttitel'] ?? '') ?>" class="form-control">
 

@@ -4,16 +4,16 @@
   <?= csrf_field() ?>
   <div class="row g-3">
     <div class="col-md-6">
-      <label class="form-label">Naam bezoekverslag *</label>
-      <input name="naam" class="form-control" required>
+      <label class="form-label" for="verslag_naam">Naam bezoekverslag *</label>
+      <input id="verslag_naam" name="naam" class="form-control" required>
     </div>
     <div class="col-md-6">
-      <label class="form-label">Klantnaam</label>
-      <input name="klantnaam" class="form-control">
+      <label class="form-label" for="klantnaam">Klantnaam</label>
+      <input id="klantnaam" name="klantnaam" class="form-control">
     </div>
     <div class="col-md-6">
-      <label class="form-label">Projecttitel</label>
-      <input name="projecttitel" class="form-control">
+      <label class="form-label" for="projecttitel">Projecttitel</label>
+      <input id="projecttitel" name="projecttitel" class="form-control">
     </div>
   </div>
   <div class="mt-3">
