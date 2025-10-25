@@ -131,9 +131,9 @@ function check_paths($paths) {
 }
 
 function create_config_files($configDir) {
-    // branding.php
+    // branding-settings.php
     $branding_content = '<?php return [ "logo_path" => "", "primary_color" => "#FFD200", "primary_color_contrast" => "#111111" ];';
-    @file_put_contents($configDir . '/branding.php', $branding_content);
+    @file_put_contents($configDir . '/branding-settings.php', $branding_content);
 
     // email_templates.php
     $email_templates_content = '<?php return [];'; // Start with empty templates
