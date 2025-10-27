@@ -15,6 +15,21 @@ session_start();
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+// --- Security headers ---
+// CSP restricts where scripts, styles, fonts, and images can be loaded from.
+// This mitigates risks when Subresource Integrity (SRI) cannot be used for some third‑party scripts.
+header("Content-Security-Policy: "
+    . "default-src 'self'; "
+    . "script-src 'self' https://cdn.jsdelivr.net https://cdn.tiny.cloud 'unsafe-inline'; "
+    . "style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
+    . "img-src 'self' data: blob:; "
+    . "font-src 'self' https://cdn.jsdelivr.net data:; "
+    . "connect-src 'self'; "
+    . "frame-src 'self'; "
+    . "object-src 'none'; "
+    . "base-uri 'self'; "
+    . "form-action 'self'");
+
 // Basis logging voor fouten wanneer serverlogs niet beschikbaar zijn.
 $logDirectory = __DIR__ . '/../storage/logs';
 $logFile = $logDirectory . '/runtime.log';
