@@ -25,7 +25,15 @@ Een webapplicatie voor het digitaal aanmaken, beheren en delen van bezoekverslag
 
 ## Installatie Instructies
 
-Volg deze stappen om de applicatie op een nieuwe server te installeren.
+<div style="background-color: #ffdddd; border-left: 6px solid #f44336; padding: 15px; margin-bottom: 15px;">
+    <h3><strong>WAARSCHUWING: Kritieke Configuratieproblemen</strong></h3>
+    <p>De huidige configuratie bevat problemen die de installatie en werking van de applicatie beïnvloeden:</p>
+    <ol>
+        <li><strong>Installatie is defect:</strong> Het benodigde database-schemabestand <code>config/schema.sql</code> ontbreekt, waardoor de web-installer zal falen bij het aanmaken van de databasetabellen.</li>
+        <li><strong>Vaste `BASE_URL`:</strong> Het configuratiebestand <code>config/config.php</code> bevat een vastgelegde <code>BASE_URL</code> (<code>/yielder/public/</code>). Als de applicatie niet in deze specifieke submap draait, zullen links en resources niet correct werken. Dit moet handmatig aangepast worden.</li>
+    </ol>
+    <p>De onderstaande stappen zijn de bedoeling, maar zullen pas volledig werken nadat bovenstaande problemen zijn opgelost.</p>
+</div>
 
 ### 1. Repository & Dependencies
 
@@ -41,7 +49,9 @@ Volg deze stappen om de applicatie op een nieuwe server te installeren.
 
 ### 2. Webserver Configuratie
 
-Configureer je webserver (Apache of Nginx) om de `/public` map als de **Document Root** te gebruiken. Dit is een cruciale beveiligingsstap om te voorkomen dat gevoelige bestanden (zoals `.env` en de `vendor` map) direct via het web toegankelijk zijn.
+Configureer je webserver (Apache of Nginx) om de `/public` map als de **Document Root** te gebruiken. Dit is een cruciale beveiligingsstap.
+
+**Belangrijk:** Controleer na de installatie het bestand `config/config.php`. De `BASE_URL` is hier vastgelegd op `/yielder/public/`. Pas deze waarde aan naar de correcte submap van jouw installatie, of naar `/` als de app in de root van een domein draait.
 
 **Voorbeeld Apache Virtual Host:**
 ```apache
@@ -63,30 +73,31 @@ Maak een lege MySQL/MariaDB database aan voor de applicatie. Onthoud de database
 ### 4. Web-Installer Uitvoeren
 
 1.  Navigeer in je browser naar de URL van je applicatie, gevolgd door `/install.php`. Bijvoorbeeld: `http://bezoekverslag.local/install.php`.
-2.  Je wordt begroet door het installatiescherm. Vul hier de volgende gegevens in:
-    *   **Database Instellingen:** De gegevens van de zojuist aangemaakte database.
-    *   **Admin Account:** De gegevens voor het eerste beheeraccount.
-3.  Klik op "Installeer Applicatie". Het script zal nu:
-    *   Het `.env` configuratiebestand aanmaken.
-    *   De databasetabellen importeren.
+2.  Vul de gevraagde database- en admin-gegevens in.
+3.  Klik op "Installeer Applicatie". Het script zal proberen het volgende te doen:
+    *   Het `.env` configuratiebestand aanmaken met je databasegegevens.
+    *   De databasetabellen importeren (deze stap zal **falen** omdat `config/schema.sql` ontbreekt).
     *   Je admin-account aanmaken.
-    *   Een `install.lock` bestand plaatsen om herinstallatie te blokkeren.
+    *   Een `install.lock` bestand aanmaken in de `storage/` map om herinstallatie te blokkeren.
 
-### 5. Installatie Afronden (Belangrijk!)
+### 5. Configuratie na Installatie
 
-Na een succesvolle installatie krijg je een melding. **Verwijder nu direct het `public/install.php` bestand van je server.**
+Na het uitvoeren van de installer (ook als deze faalt), is er een `.env` bestand aangemaakt in de hoofdmap van het project.
+*   **E-mail (SMTP):** Open het `.env` bestand. De SMTP-instellingen voor het versturen van e-mail zijn aanwezig maar leeg. Vul deze gegevens in om e-mailfunctionaliteit (zoals wachtwoord-resets) te activeren.
+*   **BASE_URL:** Vergeet niet de `BASE_URL` in `config/config.php` te controleren en aan te passen.
+
+### 6. Installatie Afronden (Belangrijk!)
+
+Na een succesvolle installatie (wanneer de problemen zijn opgelost), **verwijder direct het `public/install.php` bestand van je server.**
 
 ```bash
 # Vanuit de hoofdmap van je project
 rm public/install.php
 ```
 
-Dit is een essentiële stap om te voorkomen dat anderen de installatie opnieuw kunnen uitvoeren.
+### 7. Maprechten Controleren
 
-### 6. Maprechten Controleren
-
-Zorg ervoor dat de webserver schrijfrechten heeft op de volgende mappen. Deze mappen worden gebruikt voor het opslaan van uploads, PDF's, back-ups en andere tijdelijke bestanden.
-
+Zorg ervoor dat de webserver schrijfrechten heeft op de volgende mappen:
 *   `storage/`
 *   `public/uploads/`
 
@@ -96,8 +107,4 @@ sudo chown -R www-data:www-data storage public/uploads
 sudo chmod -R 775 storage public/uploads
 ```
 *(Vervang `www-data` door de juiste gebruiker van je webserver, zoals `apache` of `nginx`)*.
-
----
-
-De installatie is nu voltooid! Je kunt inloggen op de applicatie met het admin-account dat je tijdens de installatie hebt aangemaakt.
 
