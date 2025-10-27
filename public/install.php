@@ -98,8 +98,9 @@ EOT;
             $pdo->exec($sql);
 
             // --- Stap 5: Maak admin gebruiker aan ---
+            // Eerste admin moet direct actief zijn om te kunnen inloggen
             $password_hash = password_hash($admin_password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("INSERT INTO users (fullname, email, password, role, created_at) VALUES (?, ?, ?, 'admin', NOW())");
+            $stmt = $pdo->prepare("INSERT INTO users (fullname, email, password, role, status, created_at) VALUES (?, ?, ?, 'admin', 'active', NOW())");
             $stmt->execute([$admin_fullname, $admin_email, $password_hash]);
 
             // --- Stap 6: Maak lock-bestand aan ---
