@@ -25,6 +25,13 @@ $basePath = __DIR__ . '/../';
 $envFile = $basePath . '.env';
 $lockFile = $basePath . 'storage/install.lock';
 $schemaFile = $basePath . 'config/schema.sql';
+// Fallback voor oudere repo's waar het schema nog als 'bezoekverslag.sql' stond
+if (!file_exists($schemaFile)) {
+    $altSchema = $basePath . 'config/bezoekverslag.sql';
+    if (file_exists($altSchema)) {
+        $schemaFile = $altSchema;
+    }
+}
 $errors = [];
 $successMessage = '';
 
@@ -92,7 +99,7 @@ EOT;
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             if (!file_exists($schemaFile)) {
-                throw new Exception('Bestand `config/schema.sql` niet gevonden.');
+                throw new Exception('Schema bestand niet gevonden. Verwacht op `config/schema.sql` (of fallback `config/bezoekverslag.sql`).');
             }
             $sql = file_get_contents($schemaFile);
             $pdo->exec($sql);
