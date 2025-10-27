@@ -428,9 +428,10 @@ private const REMEMBER_COOKIE_NAME = 'remember_token';
 
                 // Remember-me cookie instellen indien aangevinkt op de login pagina
                 if (isset($_SESSION['pending_2fa_remember']) && $_SESSION['pending_2fa_remember']) {
-                    $token = bin2hex(random_bytes(32));
-                    setcookie('remember_token', $token, time() + (86400 * 30), "/"); // 30 dagen
-                    $pdo->prepare("UPDATE users SET remember_token=? WHERE id=?")->execute([$token, $user['id']]);
+                    // Sluit aan bij de reguliere remember-me flow: hash in DB, veilige cookie opties
+                    [$tokenPlain, $tokenHash] = $this->generateTokenPair();
+                    $this->setRememberMeCookie($tokenPlain);
+                    $pdo->prepare("UPDATE users SET remember_token=? WHERE id=?")->execute([$tokenHash, $user['id']]);
                 }
 
                 // Ruim tijdelijke sessievariabelen op
@@ -568,4 +569,4 @@ private const REMEMBER_COOKIE_NAME = 'remember_token';
 
         return $adminController->sendPublicEmail($user['email'], $user['fullname'], $subject, $body, $mailSettings);
     }
-}
+}
