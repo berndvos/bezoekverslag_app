@@ -332,6 +332,15 @@
               <p class="text-muted small">Download een .sql-bestand van de volledige database.</p>
               <a href="<?= csrf_url('?page=admin_backup_db') ?>" class="btn btn-secondary"><i class="bi bi-database-down"></i> Back-up downloaden</a>
             </div>
+            <!-- Schema Update -->
+            <div class="col-lg-6">
+              <h6>Schema bijwerken</h6>
+              <p class="text-muted small">Voer een idempotente schema-update uit om de database te synchroniseren met de nieuwste applicatieversie.</p>
+              <form method="post" onsubmit="return confirm('Schema bijwerken uitvoeren? Maak bij voorkeur eerst een back-up.');">
+                <?= csrf_field() ?>
+                <button type="submit" name="run_schema_update" class="btn btn-warning"><i class="bi bi-tools"></i> Schema bijwerken</button>
+              </form>
+            </div>
             <!-- Logo Upload -->
             <div class="col-lg-6">
               <h6>Logo uploaden</h6>

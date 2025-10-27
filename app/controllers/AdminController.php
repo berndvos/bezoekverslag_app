@@ -78,6 +78,7 @@ private const REDIRECT_ADMIN = 'Location: ?page=admin';
             'upload_logo' => function () { $this->processLogoUpload(); },
             'update_branding' => function () { $this->processBrandingUpdate(); },
             'update_email_templates' => function () { $this->processEmailTemplateUpdate(); },
+            'run_schema_update' => function () { $this->processSchemaUpdate(); },
             'manage_registration' => function () use ($pdo) { $this->processRegistrationManagement($pdo); },
         ];
 
@@ -90,6 +91,28 @@ private const REDIRECT_ADMIN = 'Location: ?page=admin';
         }
 
         return false;
+    }
+
+    private function processSchemaUpdate(): void {
+        requireRole(['admin']);
+        require_valid_csrf_token($_POST['csrf_token'] ?? null);
+        $output = '';
+        try {
+            ob_start();
+            // Include het update script en vang de output af
+            include __DIR__ . '/../../update_schema.php';
+            $output = trim(ob_get_clean());
+            if ($output === '') {
+                $output = 'Schema update uitgevoerd.';
+            }
+            $_SESSION['flash_message'] = ['type' => 'success', 'text' => nl2br(htmlspecialchars($output))];
+            log_action('schema_updated', 'Database schema update uitgevoerd via admin.');
+        } catch (\Throwable $e) {
+            if (ob_get_level() > 0) { ob_end_clean(); }
+            $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Fout bij schema update: ' . htmlspecialchars($e->getMessage())];
+        }
+        header(self::REDIRECT_ADMIN_MAINTENANCE);
+        exit;
     }
 
     private function processCreateUser(PDO $pdo): void {
