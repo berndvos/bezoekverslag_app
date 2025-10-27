@@ -129,6 +129,18 @@ class AdminSettingsService
                 'subject' => $input['collaboration_invite_subject'] ?? '',
                 'body' => $input['collaboration_invite_body'] ?? '',
             ],
+            '2fa_code' => [
+                'subject' => $input['2fa_code_subject'] ?? 'Uw verificatiecode voor de Bezoekverslag App',
+                'body' => $input['2fa_code_body'] ?? '',
+            ],
+            'admin_new_user_notification' => [
+                'subject' => $input['admin_new_user_notification_subject'] ?? 'Nieuwe gebruiker registratie',
+                'body' => $input['admin_new_user_notification_body'] ?? '',
+            ],
+            'user_approved_notification' => [
+                'subject' => $input['user_approved_notification_subject'] ?? 'Uw account is goedgekeurd',
+                'body' => $input['user_approved_notification_body'] ?? '',
+            ],
         ];
 
         $content = self::CONFIG_FILE_HEADER . \var_export($newTemplates, true) . ";\n";

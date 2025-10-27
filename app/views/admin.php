@@ -577,6 +577,45 @@
                 </div>
               </div>
 
+              <!-- 2FA Code -->
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="headingSix">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSix">2FA Verificatiecode</button>
+                </h2>
+                <div id="collapseSix" class="accordion-collapse collapse" data-bs-parent="#emailTemplateAccordion">
+                  <div class="accordion-body">
+                    <div class="mb-3"><label class="form-label small" for="2fa_code_subject">Onderwerp</label><input id="2fa_code_subject" type="text" name="2fa_code_subject" class="form-control form-control-sm" value="<?= htmlspecialchars($emailTemplates['2fa_code']['subject'] ?? '') ?>"></div>
+                    <div class="mb-2"><label class="form-label small" for="2fa_code_body">Inhoud</label><textarea id="2fa_code_body" name="2fa_code_body" class="form-control tinymce-editor" rows="6"><?= htmlspecialchars($emailTemplates['2fa_code']['body'] ?? '') ?></textarea><small class="text-muted">Variabelen: <code>{2fa_code}</code></small></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Admin Notificatie: Nieuwe Gebruiker -->
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="headingSeven">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeven">Admin Notificatie: Nieuwe Registratie</button>
+                </h2>
+                <div id="collapseSeven" class="accordion-collapse collapse" data-bs-parent="#emailTemplateAccordion">
+                  <div class="accordion-body">
+                    <div class="mb-3"><label class="form-label small" for="admin_new_user_notification_subject">Onderwerp</label><input id="admin_new_user_notification_subject" type="text" name="admin_new_user_notification_subject" class="form-control form-control-sm" value="<?= htmlspecialchars($emailTemplates['admin_new_user_notification']['subject'] ?? '') ?>"></div>
+                    <div class="mb-2"><label class="form-label small" for="admin_new_user_notification_body">Inhoud</label><textarea id="admin_new_user_notification_body" name="admin_new_user_notification_body" class="form-control tinymce-editor" rows="8"><?= htmlspecialchars($emailTemplates['admin_new_user_notification']['body'] ?? '') ?></textarea><small class="text-muted">Variabelen: <code>{admin_name}</code>, <code>{user_fullname}</code>, <code>{user_email}</code>, <code>{approval_link}</code></small></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Gebruiker Goedgekeurd Notificatie -->
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="headingEight">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEight">Notificatie: Account Goedgekeurd</button>
+                </h2>
+                <div id="collapseEight" class="accordion-collapse collapse" data-bs-parent="#emailTemplateAccordion">
+                  <div class="accordion-body">
+                    <div class="mb-3"><label class="form-label small" for="user_approved_notification_subject">Onderwerp</label><input id="user_approved_notification_subject" type="text" name="user_approved_notification_subject" class="form-control form-control-sm" value="<?= htmlspecialchars($emailTemplates['user_approved_notification']['subject'] ?? '') ?>"></div>
+                    <div class="mb-2"><label class="form-label small" for="user_approved_notification_body">Inhoud</label><textarea id="user_approved_notification_body" name="user_approved_notification_body" class="form-control tinymce-editor" rows="5"><?= htmlspecialchars($emailTemplates['user_approved_notification']['body'] ?? '') ?></textarea><small class="text-muted">Variabelen: <code>{user_fullname}</code>, <code>{login_link}</code></small></div>
+                  </div>
+                </div>
+              </div>
+
             </div>
             <div class="text-end mt-4">
               <button type="submit" name="update_email_templates" value="1" class="btn btn-primary"><i class="bi bi-save"></i> Sjablonen Opslaan</button>
