@@ -100,7 +100,7 @@ private const REDIRECT_ADMIN = 'Location: ?page=admin';
         try {
             ob_start();
             // Include het update script en vang de output af
-            include __DIR__ . '/../../update_schema.php';
+            include_once __DIR__ . '/../../update_schema.php';
             $output = trim(ob_get_clean());
             if ($output === '') {
                 $output = 'Schema update uitgevoerd.';
