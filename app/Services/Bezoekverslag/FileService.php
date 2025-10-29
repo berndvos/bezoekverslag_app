@@ -63,6 +63,8 @@ class FileService
         header('Content-Type: application/zip');
         header('Content-Disposition: attachment; filename="' . $zipFilename . '"');
         header('Content-Length: ' . filesize($tempZipFile));
+        ob_clean();
+        flush();
         readfile($tempZipFile);
         unlink($tempZipFile);
         exit;
@@ -128,6 +130,8 @@ class FileService
         header('Content-Type: application/zip');
         header('Content-Disposition: attachment; filename="' . $zipFilename . '"');
         header('Content-Length: ' . filesize($tempZipFile));
+        ob_clean();
+        flush();
         readfile($tempZipFile);
         unlink($tempZipFile);
         exit;

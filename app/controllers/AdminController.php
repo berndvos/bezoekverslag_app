@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Config\Database;
+use App\Services\Admin\AdminSettingsService;
 use App\Services\ViewRenderer;
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -159,12 +160,13 @@ private const REDIRECT_ADMIN = 'Location: ?page=admin';
     private function processEmailTemplateUpdate(): void {
         header(self::HEADER_JSON);
         require_valid_csrf_token($_POST['csrf_token'] ?? null);
-        $success = $this->saveEmailTemplates();
+
+        $service = new AdminSettingsService();
+        $response = $service->saveEmailTemplates($_POST);
+
         echo json_encode([
-            'success' => $success,
-            'message' => $success
-                ? 'E-mail sjablonen succesvol opgeslagen.'
-                : 'Kon de e-mail sjablonen niet opslaan. Controleer de schrijfrechten.'
+            'success' => $response->isSuccess(),
+            'message' => $response->getMessage()
         ]);
         exit;
     }
@@ -467,41 +469,6 @@ private const REDIRECT_ADMIN = 'Location: ?page=admin';
         require_valid_csrf_token($_GET['csrf_token'] ?? null);
         (new BezoekverslagController())->resetClientPassword($verslag_id, true);
         exit;
-    }
-
-    private function saveEmailTemplates() {
-        $configFile = __DIR__ . '/../../config/email_templates.php';
-
-        $newTemplates = [
-            'password_reset' => [
-                'subject' => $_POST['password_reset_subject'] ?? 'Wachtwoord resetten',
-                'body' => $_POST['password_reset_body'] ?? '',
-            ],
-            'client_update' => [
-                'subject' => $_POST['client_update_subject'] ?? 'Update van klant: {project_title}',
-                'body' => $_POST['client_update_body'] ?? '',
-            ],
-            'new_user_created' => [
-                'subject' => $_POST['new_user_created_subject'] ?? 'Welkom bij de Bezoekverslag App',
-                'body' => $_POST['new_user_created_body'] ?? '',
-            ],
-            'new_client_login' => [
-                'subject' => $_POST['new_client_login_subject'] ?? 'Toegang tot het klantportaal voor {project_title}',
-                'body' => $_POST['new_client_login_body'] ?? '',
-            ],
-            'client_portal_extended' => [
-                'subject' => $_POST['client_portal_extended_subject'] ?? 'Uw toegang tot het klantportaal is verlengd',
-                'body' => $_POST['client_portal_extended_body'] ?? '',
-            ],
-        ];
-
-        $content = "<?php\n// config/email_templates.php\nreturn " . var_export($newTemplates, true) . ";\n";
-
-        if (file_put_contents($configFile, $content) === false) {
-            $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'Kon e-mail sjabloonbestand niet wegschrijven. Controleer de schrijfrechten.'];
-            return false;
-        }
-        return true;
     }
 
     private function getLogEntries($pdo) {

@@ -649,20 +649,40 @@ document.addEventListener('DOMContentLoaded', () => {
 <script src="https://cdn.tiny.cloud/1/1g4hajwtgqfgp0t1tzkbnz67qqjf98lz6h7jannzutwlnznp/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    tinymce.init({
-      selector: 'textarea.tinymce-editor',
-      plugins: 'lists link autolink',
-      toolbar: 'undo redo | bold italic | bullist numlist | link',
-      menubar: false,
-      height: 250,
-      content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; }',
-      setup: function (editor) {
-        // Zorgt ervoor dat de AJAX-submit de laatste content uit de editor meeneemt
-        editor.on('change', function () {
-          editor.save();
-        });
-      }
-    });
+    if (typeof tinymce === 'undefined') {
+      console.error('TinyMCE script did not load.');
+      document.querySelectorAll('textarea.tinymce-editor').forEach(el => {
+        const warning = document.createElement('p');
+        warning.textContent = 'De tekst-editor kon niet geladen worden. Controleer de internetverbinding en herlaad de pagina.';
+        warning.style.color = 'red';
+        el.parentNode.insertBefore(warning, el);
+      });
+      return;
+    }
+
+    const accordion = document.getElementById('emailTemplateAccordion');
+    if (accordion) {
+      accordion.addEventListener('show.bs.collapse', event => {
+        const textarea = event.target.querySelector('.tinymce-editor');
+        if (textarea) {
+          // Verwijder een eventuele bestaande editor voordat we een nieuwe initialiseren
+          if (tinymce.get(textarea.id)) {
+            tinymce.get(textarea.id).remove();
+          }
+          tinymce.init({
+            target: textarea,
+            plugins: 'lists link autolink',
+            toolbar: 'undo redo | bold italic | bullist numlist | link',
+            menubar: false,
+            height: 250,
+            content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; }',
+            setup: function (editor) {
+              editor.on('change', () => editor.save());
+            }
+          });
+        }
+      });
+    }
   });
 </script>
 
