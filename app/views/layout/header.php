@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // app/views/layout/header.php
 use App\Config\Branding;
 

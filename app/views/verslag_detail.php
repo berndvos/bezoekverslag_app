@@ -127,7 +127,7 @@
               </div>
               <div class="col-md-6">
                 <label for="indicatief_budget" class="form-label">Indicatief budget</label>
-                <input id="indicatief_budget" type="text" name="indicatief_budget" class="form-control" value="<?= htmlspecialchars($verslag['indicatief_budget'] ?? '') ?>" placeholder="Bijv. â‚¬ 5.000 - â‚¬ 10.000">
+                <input id="indicatief_budget" type="text" name="indicatief_budget" class="form-control" value="<?= htmlspecialchars($verslag['indicatief_budget'] ?? '') ?>" placeholder="Bijv. € 5.000 - € 10.000">
               </div>
               <!-- De velden 'situatie', 'functioneel', 'uitbreiding' worden nu beheerd via het 'Leveranciers' blok -->
               <input type="hidden" name="situatie" id="hidden_situatie" value="<?= htmlspecialchars($verslag['situatie'] ?? '') ?>">

@@ -1,4 +1,4 @@
-﻿<?php include_once 'layout/header.php'; ?>
+<?php include_once 'layout/header.php'; ?>
 
 <div class="d-flex justify-content-center align-items-center" style="min-height:80vh;">
   <div class="card shadow-sm p-4 w-100" style="max-width:420px;">
@@ -17,7 +17,7 @@
 
       <div class="mb-3">
         <label for="password" class="form-label">Wachtwoord</label>
-        <input type="password" name="password" id="password" class="form-control" required placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
+        <input type="password" name="password" id="password" class="form-control" required placeholder="••••••••">
       </div>
 
       <div class="form-check mb-3">

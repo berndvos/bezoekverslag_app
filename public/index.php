@@ -1,4 +1,9 @@
-﻿<?php
+<?php
+// Force UTF-8 everywhere for consistent encoding
+ini_set('default_charset', 'UTF-8');
+if (function_exists('mb_internal_encoding')) {
+    mb_internal_encoding('UTF-8');
+}
 // --- Sessiebeveiliging ---
 // Forceer het gebruik van cookies voor sessies, niet via URL's.
 ini_set('session.use_only_cookies', 1);
@@ -10,6 +15,11 @@ ini_set('session.cookie_secure', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] 
 ini_set('session.cookie_samesite', 'Strict');
 // Use Strict Mode: De server accepteert alleen sessie-ID's die door de server zelf zijn gegenereerd.
 ini_set('session.use_strict_mode', 1);
+
+// Ensure correct Content-Type header for HTML responses
+if (!headers_sent()) {
+    header('Content-Type: text/html; charset=UTF-8');
+}
 
 session_start();
 

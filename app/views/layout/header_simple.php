@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // app/views/layout/header_simple.php
 
 $brandingConfig = \App\Config\Branding::get();
