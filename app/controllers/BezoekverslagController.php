@@ -144,10 +144,10 @@ class BezoekverslagController {
         require_valid_csrf_token($_POST['csrf_token'] ?? null);
         header('Content-Type: application/json');
 
-        if (!$this->editorService->userMayEditVerslag($verslagOwner)) {
+        if (!$this->editorService->userMayEditVerslag($id)) {
             $this->jsonExit([
                 'success' => false,
-                'message' => 'Opslaan mislukt: U heeft geen rechten om dit verslag te bewerken omdat u niet de eigenaar bent.'
+                'message' => 'Opslaan mislukt: U heeft geen rechten om dit verslag te bewerken.'
             ]);
         }
 

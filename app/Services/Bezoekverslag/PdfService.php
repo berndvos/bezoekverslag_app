@@ -19,6 +19,7 @@ class PdfService
 
     public function generate(int $id): void
     {
+        set_time_limit(300); // 5 minutes
         requireLogin();
 
         if (!extension_loaded('gd')) {
@@ -126,16 +127,33 @@ class PdfService
 
     private function loadPdfRelatedData(PDO $pdo, int $id): array
     {
-        $stmt = $pdo->prepare('SELECT * FROM ruimte WHERE verslag_id = ?');
-        $stmt->execute([$id]);
-        $ruimtes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // Fetch all rooms
+        $stmtRuimtes = $pdo->prepare('SELECT * FROM ruimte WHERE verslag_id = ? ORDER BY id');
+        $stmtRuimtes->execute([$id]);
+        $ruimtes = $stmtRuimtes->fetchAll(PDO::FETCH_ASSOC);
 
-        $fotoStmt = $pdo->prepare('SELECT pad FROM foto WHERE ruimte_id = ?');
-        foreach ($ruimtes as $index => $ruimte) {
-            $fotoStmt->execute([$ruimte['id']]);
-            $ruimtes[$index]['fotos'] = $fotoStmt->fetchAll(PDO::FETCH_ASSOC);
+        $ruimteIds = array_map(fn($r) => $r['id'], $ruimtes);
+        $fotosByRuimte = [];
+
+        if (!empty($ruimteIds)) {
+            // Fetch all photos for all rooms in one go
+            $in = str_repeat('?,', count($ruimteIds) - 1) . '?';
+            $stmtFotos = $pdo->prepare("SELECT pad, ruimte_id FROM foto WHERE ruimte_id IN ($in)");
+            $stmtFotos->execute($ruimteIds);
+            $allFotos = $stmtFotos->fetchAll(PDO::FETCH_ASSOC);
+
+            // Group photos by room
+            foreach ($allFotos as $foto) {
+                $fotosByRuimte[$foto['ruimte_id']][] = $foto;
+            }
         }
 
+        // Attach photos to their rooms
+        foreach ($ruimtes as $i => $ruimte) {
+            $ruimtes[$i]['fotos'] = $fotosByRuimte[$ruimte['id']] ?? [];
+        }
+
+        // Fetch project files
         $stmtBestanden = $pdo->prepare('SELECT bestandsnaam FROM project_bestanden WHERE verslag_id = ? ORDER BY bestandsnaam ASC');
         $stmtBestanden->execute([$id]);
         $projectBestanden = $stmtBestanden->fetchAll(PDO::FETCH_ASSOC);

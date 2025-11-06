@@ -22,8 +22,14 @@ private const HEADER_JSON = 'Content-Type: application/json';
 
     /** Nieuwe ruimte toevoegen */
     public function create($verslag_id) {
-        requireRole(['accountmanager', 'admin', 'poweruser']);
+        requireLogin();
         $pdo = Database::getConnection();
+        $verslag_id = (int)$verslag_id;
+        if (!canEditVerslag($verslag_id)) {
+            $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'U heeft geen rechten om ruimtes voor dit verslag te beheren.'];
+            header('Location: ?page=dashboard');
+            exit;
+        }
         
         // Zorg dat de view altijd een complete (lege) array heeft om mee te werken
         $ruimte = [
@@ -69,7 +75,7 @@ private const HEADER_JSON = 'Content-Type: application/json';
 
     /** Nieuwe ruimte opslaan */
     public function save() {
-        requireRole(['accountmanager', 'admin', 'poweruser']);
+        requireLogin();
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header(self::REDIRECT_DASHBOARD);
             exit;
@@ -79,6 +85,11 @@ private const HEADER_JSON = 'Content-Type: application/json';
         $verslag_id = (int)($_GET['verslag_id'] ?? 0);
         if (!$verslag_id) {
             die("Geen verslag ID opgegeven.");
+        }
+        if (!canEditVerslag($verslag_id)) {
+            header(self::HEADER_JSON);
+            echo json_encode(['success' => false, 'message' => 'U heeft geen rechten om dit verslag te bewerken.']);
+            exit;
         }
 
         $pdo = Database::getConnection();
@@ -112,8 +123,21 @@ private const HEADER_JSON = 'Content-Type: application/json';
 
     /** Ruimte bewerken */
     public function edit($id) {
-        requireRole(['accountmanager', 'admin', 'poweruser']);
+        requireLogin();
         $pdo = Database::getConnection();
+
+        // Haal verslag_id vroegtijdig op om rechten te kunnen valideren
+        $stmtVid = $pdo->prepare("SELECT verslag_id FROM ruimte WHERE id = ?");
+        $stmtVid->execute([(int)$id]);
+        $verslag_id = (int)$stmtVid->fetchColumn();
+        if (!$verslag_id) {
+            die("Ruimte niet gevonden.");
+        }
+        if (!canEditVerslag($verslag_id)) {
+            $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'U heeft geen rechten om deze ruimte te bewerken.'];
+            header('Location: ?page=dashboard');
+            exit;
+        }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             require_valid_csrf_token($_POST['csrf_token'] ?? null);
@@ -163,7 +187,7 @@ private const HEADER_JSON = 'Content-Type: application/json';
 
     /** Ruimte verwijderen */
     public function delete($id) {
-        requireRole(['accountmanager', 'admin', 'poweruser']);
+        requireLogin();
         require_valid_csrf_token($_GET['csrf_token'] ?? null);
         $pdo = Database::getConnection();
 
@@ -174,7 +198,12 @@ private const HEADER_JSON = 'Content-Type: application/json';
             die("Ruimte niet gevonden.");
         }
 
-        $verslag_id = $ruimte['verslag_id'];
+        $verslag_id = (int)$ruimte['verslag_id'];
+        if (!canEditVerslag($verslag_id)) {
+            $_SESSION['flash_message'] = ['type' => 'danger', 'text' => 'U heeft geen rechten om deze ruimte te verwijderen.'];
+            header('Location: ?page=dashboard');
+            exit;
+        }
 
         $pdo->prepare("DELETE FROM ruimte WHERE id=?")->execute([$id]);
 
@@ -187,7 +216,7 @@ private const HEADER_JSON = 'Content-Type: application/json';
 
     /** Foto verwijderen */
     public function deleteFoto($foto_id) {
-        requireRole(['accountmanager', 'admin', 'poweruser']);
+        requireLogin();
         $token = $_POST['csrf_token'] ?? $_GET['csrf_token'] ?? null;
         if (!verify_csrf_token($token)) {
             echo json_encode(['success' => false, 'message' => 'Ongeldig verzoek.']);
@@ -207,6 +236,15 @@ private const HEADER_JSON = 'Content-Type: application/json';
             exit;
         }
 
+        // 1b. Haal verslag_id op via ruimte om rechten te controleren
+        $ruimteStmt = $pdo->prepare("SELECT verslag_id FROM ruimte WHERE id = ?");
+        $ruimteStmt->execute([(int)$foto['ruimte_id']]);
+        $verslag_id = (int)$ruimteStmt->fetchColumn();
+        if (!$verslag_id || !canEditVerslag($verslag_id)) {
+            echo json_encode(['success' => false, 'message' => 'U heeft geen rechten om deze foto te verwijderen.']);
+            exit;
+        }
+
         // 2. Verwijder het fysieke bestand
         $fullPath = __DIR__ . self::PUBLIC_PATH . $foto['pad'];
         if (file_exists($fullPath)) {
@@ -219,9 +257,6 @@ private const HEADER_JSON = 'Content-Type: application/json';
 
         if ($deleteSuccess) {
             // 4. Markeer PDF als verouderd
-            $ruimteStmt = $pdo->prepare("SELECT verslag_id FROM ruimte WHERE id = ?");
-            $ruimteStmt->execute([$foto['ruimte_id']]);
-            $verslag_id = $ruimteStmt->fetchColumn();
             if ($verslag_id) {
                 $this->markPdfOutdated($verslag_id);
             }
@@ -313,4 +348,4 @@ private const HEADER_JSON = 'Content-Type: application/json';
             }
         }
     }
-}
+}

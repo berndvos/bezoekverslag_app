@@ -32,15 +32,9 @@ class EditorService
         return isAdmin() || (int)$verslagOwner['created_by'] === $currentUserId;
     }
 
-    public function userMayEditVerslag(?array $verslagOwner): bool
+    public function userMayEditVerslag(int $id): bool
     {
-        if (!$verslagOwner) {
-            return false;
-        }
-        if (isAdmin()) {
-            return true;
-        }
-        return (int)($verslagOwner['created_by'] ?? 0) === (int)($_SESSION['user_id'] ?? 0);
+        return canEditVerslag($id);
     }
 
     public function ensureVerslagEditable(int $id): void
@@ -258,4 +252,3 @@ class EditorService
         return [$collaborators, $colleagues];
     }
 }
-
